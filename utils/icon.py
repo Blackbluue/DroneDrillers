@@ -7,7 +7,7 @@ from typing import Mapping
 class Icon(Enum):
     """An icon on the map."""
 
-    ZERG = "Z"
+    ATRON = "A"
     SCOUT = "S"
     MINER = "M"
     WALL = "#"
@@ -52,7 +52,7 @@ class Icon(Enum):
             Icon.SCOUT: "\u00A7",
             Icon.MINER: "\u00A3",
             Icon.MINERAL: "\u0275",
-            Icon.ZERG: "\u017e",
+            Icon.ATRON: "\u00C4",
             Icon.DEPLOY_ZONE: "\u02c5",
             Icon.EMPTY: " ",
             Icon.UNKNOWN: "\u02D1",
