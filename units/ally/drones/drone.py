@@ -16,12 +16,32 @@ class Drone(Atron):
     """Parent class for all drone atron units."""
 
     max_health = 40
+    max_capacity = 10
+    max_moves = 1
 
     def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
         self._path_to_goal: List["Coordinate"] = []
+
+    @property
+    def capacity(self) -> int:
+        """The max mineral capacity for this drone.
+
+        Returns:
+            int: The max capacity.
+        """
+        return self.max_capacity
+
+    @property
+    def moves(self) -> int:
+        """The max moves this drone can take in 1 tick.
+
+        Returns:
+            int: The drone's max moves.
+        """
+        return self.max_moves
 
     @property
     def path(self) -> List["Coordinate"]:
