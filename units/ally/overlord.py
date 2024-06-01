@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
-
-from drones import Drone
 
 from utils import Context, Map
 
 from .atron import Atron
+from .drones import Drone
 
 if TYPE_CHECKING:
     from typing import Optional, Type
