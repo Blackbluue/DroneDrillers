@@ -9,7 +9,7 @@ from units.ally.atron import Atron
 from utils import Coordinate, Icon
 
 if TYPE_CHECKING:
-    from typing import List
+    from collections.abc import MutableSequence
 
     from units.ally.overlord import Overlord
 
@@ -25,7 +25,7 @@ class Drone(Atron):
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
-        self._path_to_goal: List["Coordinate"] = []
+        self._path_to_goal: MutableSequence[Coordinate] = []
 
     @property
     def capacity(self) -> int:
@@ -46,7 +46,7 @@ class Drone(Atron):
         return self.max_moves
 
     @property
-    def path(self) -> List["Coordinate"]:
+    def path(self) -> MutableSequence[Coordinate]:
         """The path this drone will take to its destination.
 
         The destination of this drone will always be the final element of this
@@ -55,7 +55,7 @@ class Drone(Atron):
         return self._path_to_goal
 
     @path.setter
-    def path(self, new_path: List[Coordinate]) -> None:
+    def path(self, new_path: MutableSequence[Coordinate]) -> None:
         self._path_to_goal = new_path
         self._path_traveled = []
         # traveling if path length is greater than 2 (start, dest)

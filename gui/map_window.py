@@ -1,12 +1,14 @@
 """Defines MapWindow class along with the methods and attributes that it uses."""
 
+from __future__ import annotations
+
 import tkinter
 from typing import TYPE_CHECKING
 
 from utils import Icon, Tile
 
 if TYPE_CHECKING:
-    from utils import Map
+    from utils import MapData
 
 
 class MapWindow(tkinter.Toplevel):
@@ -17,7 +19,7 @@ class MapWindow(tkinter.Toplevel):
     """
 
     def __init__(
-        self, parent: tkinter.Misc, title: str, physical_map: "Map"
+        self, parent: tkinter.Misc, title: str, physical_map: MapData
     ) -> None:
         """Initialize the GUI map.
 

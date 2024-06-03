@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from typing import Any, Dict, Iterable, Mapping
 
     from units.ally.drones import Drone
-    from utils import Map
+    from utils import MapData
 
 
 class Dashboard(tkinter.Toplevel):
@@ -36,7 +36,7 @@ class Dashboard(tkinter.Toplevel):
         self.photo = tkinter.PhotoImage(file="icon.png")
 
         self.configure(bg="#2C292C")
-        self.map_dict: Dict[MapWindow, Map] = {}
+        self.map_dict: Dict[MapWindow, MapData] = {}
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
@@ -75,7 +75,7 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def create_map_gui(self, physical_map: Map) -> None:
+    def create_map_gui(self, physical_map: MapData) -> None:
         """Create a GUI for every map that the overlord has.
 
         Arguments:

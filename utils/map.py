@@ -3,21 +3,46 @@
 from __future__ import annotations
 
 from queue import PriorityQueue
+from random import randint
 from typing import TYPE_CHECKING, overload
 
+from .context import Context
 from .coordinate import Coordinate
+from .directions import Directions
 from .icon import Icon
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, List, Optional, Set, Tuple, Union
+    from collections.abc import (
+        Iterable,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
+        Sequence,
+    )
 
     from units.ally.drones import Drone
 
-    from .context import Context
+
+class MineralContext:
+    def __init__(self, location: Coordinate, amt: int) -> None:
+        self.loc: Coordinate = location
+        self.amt: int = amt
+
+    def __repr__(self) -> str:
+        return f"MineralContext({repr(self.loc)}, {self.amt})"
 
 
-class Map:
+class DroneContext:
+    def __init__(self, context: Context, atron: Drone, health: int) -> None:
+        self.context: Context = context
+        self.atron: Drone = atron
+        # TODO: This should be maintained independent of whichever map they are on
+        self.health: int = health
+        self.mined_mineral = 0
+
+
+class MapData:
     """A map object, used to describe the tile layout of an area."""
 
     NODE_WEIGHTS = {
@@ -28,33 +53,233 @@ class Map:
         None: 1,
     }
 
-    def __init__(self, map_id: int, density: float) -> None:
-        """Initialize a Map with a context object.
+    def __init__(self, map_id: int) -> None:
+        """Initialize a Map object.
 
         Args:
-            context (Context): The origin of the map.
+            map_id (int): The ID of the map.
         """
         self.map_id = map_id
-        self.density = density
+        self.d_contexts: list[DroneContext] = []
+        self._data: list[list[Icon]] = []
+        self._total_minerals: list[MineralContext] = []
+        self._acid: list[Coordinate] = []
         # a set of the coords of minerals and drone id tasked to mining it
-        self.untasked_minerals: Set[Coordinate] = set()
-        self.tasked_minerals: Set[Coordinate] = set()
-        self._stored_tiles_: Dict[Coordinate, Tile] = {}
+        self.untasked_minerals: MutableSet[Coordinate] = set()
+        self.tasked_minerals: MutableSet[Coordinate] = set()
+        self._stored_tiles_: MutableMapping[Coordinate, Tile] = {}
         self.scout_count = 0
 
-    def dijkstra(self, start: Coordinate, end: Coordinate) -> List[Coordinate]:
+    def from_file(self, filename: str) -> MapData:
+        with open(filename) as fh:
+            for row, line in enumerate(fh):
+                destination = list(line.rstrip())
+                for column, char in enumerate(destination):
+                    if char == "~":
+                        self._acid.append(Coordinate(column, row))
+                    elif char == "_":
+                        self.landing_zone = Coordinate(column, row)
+                    elif char in "0123456789":
+                        destination[column] = "*"
+                        mineral_context = MineralContext(
+                            Coordinate(column, row), int(char)
+                        )
+                        self._total_minerals.append(mineral_context)
+
+                self._data.append([Icon(char) for char in destination])
+
+        self._set_dimensions(column, row)
+        return self
+
+    def from_scratch(self, width: int, height: int, density: float) -> MapData:
+        # create the box
+        self._data.append([Icon(char) for char in ["#"] * width])
+        for _ in range(height):
+            self._data.append(
+                [Icon(char) for char in f"#{' ' * (width - 2)}#"]
+            )
+        self._data.append([Icon(char) for char in ["#"] * width])
+
+        self._set_dimensions(width, height)
+        self.landing_zone = self._get_rand_coords()
+        self[self.landing_zone] = Icon.DEPLOY_ZONE
+
+        wall_count = ((width * 2) + (height * 2)) - 4
+        total_minerals = int(density * (self._total_coordinates - wall_count))
+        for _ in range(total_minerals):
+            self.add_mineral(randint(1, 9))
+
+        # TODO: add acid
+        return self
+
+    def task_miner(self, miner: Drone) -> None:
+        """Task the miner with mining an available mineral.
+
+        The miner will have their path variable set, and the mineral
+        they are tasked with will be removed from the untasked_minerals
+        set.
+
+        Args:
+            miner (Drone): The miner to task.
+        """
+        mineral = self.untasked_minerals.pop()
+        self.tasked_minerals.add(mineral)
+        miner.path = self.dijkstra(self.landing_zone, mineral)
+
+    @overload
+    def get(self, key: Tile | Coordinate, default: None) -> Tile | None:
+        pass
+
+    @overload
+    def get(self, key: Tile | Coordinate, default: Tile) -> Tile:
+        pass
+
+    def get(self, key, default):
+        """Get the tile with the specified coordinates from the map.
+
+        A Tile or Coordinate object may be passed in as the key; if a Tile is
+        given, only it's coordinate attribute will be used in look up.
+
+        Args:
+            key (Tile | Coordinate): The key to look up.
+            default (Tile, optional): A value to return if the
+                key is not found. Defaults to None.
+
+        Returns:
+            Tile | None: The Tile within this map, or None if not found.
+        """
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+
+    def get_unexplored_tiles(self) -> Sequence[Tile]:
+        """Return a list of all unexplored tiles on the map.
+
+        Returns:
+            Sequence[Tile]: The unexplored tile list.
+        """
+        return [
+            tile
+            for tile in self._stored_tiles_.values()
+            if not tile.discovered
+        ]
+
+    def summary(self) -> float:
+        """Ratio of total minerals to reachable tiles.
+
+        Returns:
+            float: The ratio of total minerals to reachable tiles.
+        """
+        wall_count = sum(row.count(Icon.WALL) for row in self._data)
+        total_minerals = sum(mineral.amt for mineral in self._total_minerals)
+        return total_minerals / (self._total_coordinates - wall_count)
+
+    def remove_atron(self, atron_id: int) -> tuple[int, int] | None:
+        """Removes atron from map and returns the mineral and health.
+
+        Args:
+            atron_id (int): The id of the atron to be removed.
+
+        Returns:
+            tuple[int, int] | None:
+                The mined mineral count and health of the removed drone, or None.
+        """
+        for drone_context in self.d_contexts:
+            if (
+                atron_id == id(drone_context.atron)
+                and drone_context.context.coord == self.landing_zone
+            ):
+                self[drone_context.context.coord] = Icon.DEPLOY_ZONE
+                self.d_contexts.remove(drone_context)
+                return drone_context.mined_mineral, drone_context.health
+
+    def add_atron(self, atron: Drone, health: int) -> bool:
+        """Add an atron to the map.
+
+        The atron cannot be added to the map if the deploy zone is occupied.
+
+        Args:
+            atron (Drone): The atron to add to the map.
+            health (int): The health of the atron.
+
+        Returns:
+            bool: True if the atron was added, else False.
+        """
+        # Check if the landing zone is available
+        if self[self.landing_zone] != Icon.DEPLOY_ZONE:
+            return False
+        self[self.landing_zone] = atron.icon
+
+        context = self._build_context(self.landing_zone)
+        drone_context = DroneContext(context, atron, health)
+        self.d_contexts.append(drone_context)
+        return True
+
+    def tick(self) -> None:
+        for d_context in self.d_contexts:
+            for _ in range(d_context.atron.moves):
+                # acid damage is applied before movement
+                if d_context.context.coord in self._acid:
+                    d_context.health -= Icon.ACID.health_cost()
+                if d_context.health <= 0:
+                    self._clear_tile(d_context.context.coord)
+                    self.d_contexts.remove(d_context)
+                    break  # atron is dead move on to next
+
+                direction = d_context.atron.action(d_context.context)
+                if direction != Directions.CENTER.value:
+                    self._move_to(d_context, direction)
+
+    def _set_dimensions(self, width: int, height: int) -> None:
+        self._width = width
+        self._height = height
+        self._total_coordinates = self._width * self._height
+
+    def _get_rand_coords(self) -> Coordinate:
+        """Get a random set of coordinates on the map.
+
+        Returns:
+            Coordinate: A set of coordinates on the map.
+        """
+        x_coords: int = self._width - 2
+        y_coords: int = self._height - 2
+        coordinates = Coordinate(0, 0)
+        while self[coordinates].icon != " ":
+            # Choose a random location on map excluding walls
+            coordinates = Coordinate(
+                randint(1, x_coords),
+                randint(1, y_coords),
+            )
+        return coordinates
+
+    def add_mineral(self, amt: int) -> None:
+        """Adds a single mineral deposit to a random open spot in the map.
+
+        Args:
+            amt (int): The size of the mineral deposit.
+        """
+        coordinates = self._get_rand_coords()
+
+        self[coordinates] = Icon.MINERAL
+        mineral_context = MineralContext(coordinates, amt)
+        self._total_minerals.append(mineral_context)
+
+    def dijkstra(
+        self, start: Coordinate, end: Coordinate
+    ) -> MutableSequence[Coordinate]:
         """Apply Dijkstra's Algorithm to find a path between two points.
 
         Args:
             start (Coordinate): The start point for the search
             end (Coordinate): The end point for the search
         Returns:
-            list(Coordinate): Path in the form of a Coordinate list
+            list[Coordinate]: Path in the form of a Coordinate list
         """
-        visited: Set[Coordinate] = set()
-        parents_map: Dict[Coordinate, Coordinate] = {}
+        visited: set[Coordinate] = set()
+        parents_map: dict[Coordinate, Coordinate] = {}
         path_found = False
-        pqueue: PriorityQueue[Tuple[int, Coordinate]] = PriorityQueue()
+        pqueue: PriorityQueue[tuple[int, Coordinate]] = PriorityQueue()
         pqueue.put((0, start))
         while not pqueue.empty():
             _, node = pqueue.get()
@@ -90,8 +315,8 @@ class Map:
         self,
         node: Coordinate,
         neighbors: Iterable[Coordinate],
-        parents_map: Dict[Coordinate, Coordinate],
-        pqueue: PriorityQueue[Tuple[int, Coordinate]],
+        parents_map: MutableMapping[Coordinate, Coordinate],
+        pqueue: PriorityQueue[tuple[int, Coordinate]],
     ) -> None:
         for neighbor_coord in neighbors:
             if (neighbor := self.get(neighbor_coord, None)) is None:
@@ -107,10 +332,10 @@ class Map:
         self,
         start: Coordinate,
         end: Coordinate,
-        parents_map: Dict[Coordinate, Coordinate],
-    ) -> list[Coordinate]:
+        parents_map: MutableMapping[Coordinate, Coordinate],
+    ) -> MutableSequence[Coordinate]:
         curr = end
-        final_path: List[Coordinate] = [end]
+        final_path: list[Coordinate] = [end]
         while curr != start:
             coord = parents_map[curr]
             final_path.append(coord)
@@ -121,108 +346,80 @@ class Map:
         final_path = final_path[::-1]
         return final_path
 
-    def update_context(self, context: Context) -> None:
-        """Update the adjacency list for the Map with a context object.
-
-        Arguments:
-            context (Context): The context object to use to update
-                the Map.
-            origin (bool): Whether or not the passed context object
-                is the origin of the map.
-        """
-        x = context.x
-        y = context.y
-        symbols = [context.north, context.south, context.east, context.west]
-        atron_position = Coordinate(x, y)
-        if len(self._stored_tiles_) == 0:
-            self.origin = atron_position
-            self.add_tile(Tile(self.origin, Icon.DEPLOY_ZONE))
-
-        for symbol, coordinate in zip(symbols, atron_position.cardinals()):
-            icon = Icon(symbol)
-            tile = Tile(coordinate, icon)
-            self._stored_tiles_[coordinate] = tile
-            self._track_mineral(icon, coordinate)
-            for neighbor_coordinate in coordinate.cardinals():
-                if self.get(neighbor_coordinate, None) is None:
-                    neighbor_tile = Tile(neighbor_coordinate)
-                    self._stored_tiles_[neighbor_coordinate] = neighbor_tile
-
-    def add_tile(self, tile: Tile) -> None:
-        """Add tile to map.
-
-        Args:
-            tile (Tile): The tile to add.
-        """
-        self._stored_tiles_[tile.coordinate] = tile
-
     def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
         if icon == Icon.MINERAL and coordinate not in self.tasked_minerals:
             self.untasked_minerals.add(coordinate)
 
-    def task_miner(self, miner: Drone) -> None:
-        """Task the miner with mining an available mineral.
-
-        The miner will have their path variable set, and the mineral
-        they are tasked with will be removed from the untasked_minerals
-        set.
-
-        Args:
-            miner (Drone): The miner to task.
-        """
-        mineral = self.untasked_minerals.pop()
-        self.tasked_minerals.add(mineral)
-        miner.path = self.dijkstra(self.origin, mineral)
-
-    @overload
-    def get(
-        self, key: Union[Tile, Coordinate], default: None
-    ) -> Optional[Tile]:
-        pass
-
-    @overload
-    def get(self, key: Union[Tile, Coordinate], default: Tile) -> Tile:
-        pass
-
-    def get(self, key, default):
-        """Get the tile with the specified coordinates from the map.
-
-        A Tile or Coordinate object may be passed in as the key; if a Tile is
-        given, only it's coordinate attribute will be used in look up.
-
-        Args:
-            key (Union[Tile, Coordinate]): The key to look up.
-            default (Optional[Tile], optional): A value to return if the
-                key is not found. Defaults to None.
-
-        Returns:
-            Optional[Tile]: The Tile within this map.
-        """
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
-
-    def get_unexplored_tiles(self) -> List[Tile]:
-        """Return a list of all unexplored tiles on the map.
-
-        Returns:
-            List[Tile]: The unexplored tile list.
-        """
-        return [
-            tile
-            for tile in self._stored_tiles_.values()
-            if not tile.discovered
+    def _build_context(self, location: Coordinate) -> Context:
+        cardinals = [
+            self[Coordinate(location.x, location.y - 1)].icon,
+            self[Coordinate(location.x, location.y + 1)].icon,
+            self[Coordinate(location.x + 1, location.y)].icon,
+            self[Coordinate(location.x - 1, location.y)].icon,
         ]
+        return Context(location, *cardinals)
 
-    def __getitem__(self, key: Union[Tile, Coordinate]) -> Tile:
+    def _clear_tile(self, pos: Coordinate) -> None:
+        """Update the tile at the given coordinates.
+
+        This function is used when an object moves off of the given tile.
+
+        Args:
+            pos (Coordinate): The coordinates of the tile to update.
+        """
+        if pos == self.landing_zone:
+            self[pos].icon = Icon.DEPLOY_ZONE
+        elif pos in self._acid:
+            self[pos].icon = Icon.ACID
+        else:
+            self[pos].icon = Icon.EMPTY
+
+    def _find_mineral_context_at(
+        self, pos: Coordinate
+    ) -> MineralContext | None:
+        for mineral_context in self._total_minerals:
+            if mineral_context.loc == pos:
+                return mineral_context
+
+    def _find_atron_context_at(self, pos: Coordinate) -> DroneContext | None:
+        for drone_context in self.d_contexts:
+            if drone_context.context.coord == pos:
+                return drone_context
+
+    def _move_to(self, d_context: DroneContext, dirc: str) -> None:
+        cur_loc = d_context.context.coord
+        new_location = cur_loc.translate_one(dirc)
+        new_tile = self[new_location]
+
+        match new_tile.icon:
+            case Icon.ATRON | Icon.MINER | Icon.SCOUT:
+                pass  # Another Drone is already there
+            case (
+                Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY
+            ):  # Drone can move here
+                self._clear_tile(cur_loc)
+                new_tile.icon = d_context.atron.icon
+                d_context.context = self._build_context(new_location)
+            case Icon.WALL:  # Drone hits a wall
+                d_context.health -= Icon.WALL.health_cost()
+            case Icon.MINERAL:  # Drone mines a mineral
+                if mineral := self._find_mineral_context_at(new_location):
+                    if mineral.amt > 0:
+                        mineral.amt -= 1
+                        d_context.mined_mineral += 1
+
+                        if mineral.amt <= 0:
+                            self._clear_tile(mineral.loc)
+                            self._total_minerals.remove(mineral)
+
+    def __getitem__(self, key: Tile | Coordinate) -> Tile:
         """Get the tile with the specified coordinates from the map.
 
         A Tile or Coordinate object may be passed in as the key; if a Tile is
         given, only it's coordinate attribute will be used in look up.
 
         Args:
-            key (Union[Tile, Coordinate]): The key to look up.
+            key (Tile | Coordinate): The key to look up.
 
         Raises:
             KeyError: If no Tile with the given coordinates exists in this map.
@@ -233,6 +430,10 @@ class Map:
         if isinstance(key, Tile):
             key = key.coordinate
         return self._stored_tiles_[key]
+
+    def __setitem__(self, key: Coordinate, val: Icon):
+        column, row = key
+        self._data[row][column] = val
 
     def __iter__(self):
         """Iterate over this map.
@@ -251,3 +452,8 @@ class Map:
             str: The string representation of this object.
         """
         return f"Map({list(self._stored_tiles_)})"
+
+    def __str__(self) -> str:
+        return "\n".join(
+            "".join([char.value for char in row]) for row in self._data
+        )

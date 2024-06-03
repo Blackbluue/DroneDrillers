@@ -3,7 +3,7 @@ from __future__ import annotations
 from queue import SimpleQueue
 from typing import TYPE_CHECKING
 
-from utils import Context, Map
+from utils import Context, MapData
 
 from .atron import Atron
 from .drones import Drone
@@ -34,19 +34,19 @@ class Overlord(Atron):
         self.drones: dict[int, Drone] = {}
         # a drone id as key and drone as value
 
-        self._deployed: dict[int, Optional[Map]] = {}
+        self._deployed: dict[int, Optional[MapData]] = {}
         # a drone id as key and map id as value
 
         self._idle_drones: dict[Type[Drone], set[Drone]] = {}
-        self._update_queue: SimpleQueue[tuple[Map, Drone, Context]] = (
+        self._update_queue: SimpleQueue[tuple[MapData, Drone, Context]] = (
             SimpleQueue()
         )
         # a queue of map updates from zerg drones
 
-        self._pickup_queue: SimpleQueue[tuple[Map, Drone]] = SimpleQueue()
+        self._pickup_queue: SimpleQueue[tuple[MapData, Drone]] = SimpleQueue()
         # a queue of pick up requests from drones
 
-        self._maps: dict[int, Map] = {}
+        self._maps: dict[int, MapData] = {}
         # a map id as key and Map as value
 
         # scouts, miners, classes = self._create_drone_classes(refined_minerals)
@@ -68,14 +68,13 @@ class Overlord(Atron):
         """
         return (0, 0, {})
 
-    def add_map(self, map_id: int, summary: float) -> None:
+    def add_map(self, map_id: int, physical_map: MapData) -> None:
         """Register ID for map and summary of mineral density.
 
         Args:
             map_id (int): The id of the map.
             summary (float): The density of minerals in the map.
         """
-        physical_map = Map(map_id, summary)
         self._maps[map_id] = physical_map
         self.dashboard.create_map_gui(physical_map)
         self.dashboard.update_drone_table(self.drones.values())

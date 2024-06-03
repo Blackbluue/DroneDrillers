@@ -4,30 +4,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .icon import Icon
-
 if TYPE_CHECKING:
-    from typing import Optional
-
     from units.ally.drones import Drone
 
     from .coordinate import Coordinate
+    from .icon import Icon
 
 
 class Tile:
     """A single tile on the map."""
 
-    def __init__(self, coordinate: Coordinate, icon: Optional[Icon] = None):
+    def __init__(
+        self, coordinate: Coordinate, icon: Icon | None = None
+    ) -> None:
         """Initialize the tile.
 
         Args:
             coordinate (Coordinate): The coordinate of this tile.
-            icon (Optional[Icon], optional): The icon on this tile, if
+            icon (Icon, optional): The icon on this tile, if
                 discovered. Defaults to None.
         """
         self._coordinate = coordinate
         self._icon = icon
-        self._occupation: Optional[Drone] = None
+        self._occupation: Drone | None = None
 
     @property
     def coordinate(self) -> Coordinate:
@@ -35,7 +34,7 @@ class Tile:
         return self._coordinate
 
     @property
-    def icon(self) -> Optional[Icon]:
+    def icon(self) -> Icon | None:
         """The icon for this tile.
 
         Setting the icon for a tile implicitly makes it discovered. If a tile
@@ -55,12 +54,12 @@ class Tile:
         return bool(self.icon)
 
     @property
-    def occupied_drone(self) -> Optional[Drone]:
+    def occupied_drone(self) -> Drone | None:
         """The drone occupying this tile, which may be None."""
         return self._occupation
 
     @occupied_drone.setter
-    def occupied_drone(self, drone: Optional[Drone]):
+    def occupied_drone(self, drone: Drone | None) -> None:
         if drone:
             self._occupy(drone)
         else:

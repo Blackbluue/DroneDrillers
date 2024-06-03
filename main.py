@@ -1,13 +1,19 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 import sys
 import time
 import tkinter as tk
 from random import uniform
+from typing import TYPE_CHECKING
 
 from gui import Dashboard
-from map_builder import Map
 from units.ally import Overlord
+from utils import MapData
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping, MutableMapping
 
 MIN_DENSITY = 0.1
 MAX_DENSITY = 0.5
@@ -87,7 +93,7 @@ class MainController(tk.Tk):
 
     def _build_maps(
         self, count: int, width: int, height: int
-    ) -> dict[int, Map]:
+    ) -> dict[int, MapData]:
         """Build maps based on count, width, and height.
 
         If map files are given on the command line, they will be used instead.
@@ -100,17 +106,18 @@ class MainController(tk.Tk):
         Returns:
             dict[int, Map]: Dictionary of map id as key and Map as value
         """
-        maps: dict[int, Map] = {}
+        maps: dict[int, MapData] = {}
         for map_number in range(count):
-            maps[map_number] = Map()
             if sys.argv[1:]:  # Overwrite from file if indicated
-                maps[map_number].from_file(sys.argv.pop(1))
+                maps[map_number] = MapData(map_number).from_file(
+                    sys.argv.pop(1)
+                )
             else:
-                maps[map_number].from_scratch(
+                maps[map_number] = MapData(map_number).from_scratch(
                     width, height, uniform(MIN_DENSITY, MAX_DENSITY)
                 )
 
-            self.overlord.add_map(map_number, maps[map_number].summary())
+            self.overlord.add_map(map_number, maps[map_number])
         return maps
 
     def _print_drone_info(self):
@@ -125,7 +132,9 @@ class MainController(tk.Tk):
                 print()
         print("-" * 100)
 
-    def _map_tick_updates(self, maps: dict[int, Map], mined: int) -> None:
+    def _map_tick_updates(
+        self, maps: Mapping[int, MapData], mined: int
+    ) -> None:
         for map_id, a_map in maps.items():
             print(f"Map {map_id}")
             for a_drone in a_map.d_contexts:
@@ -140,9 +149,9 @@ class MainController(tk.Tk):
 
     def process_tick(
         self,
-        maps: dict[int, Map],
-        drone_locations: dict[int, int | None],
-        drone_healths: dict[int, int],
+        maps: Mapping[int, MapData],
+        drone_locations: MutableMapping[int, int | None],
+        drone_healths: MutableMapping[int, int],
     ) -> int:
         mined = 0
         action = self.overlord.action()
