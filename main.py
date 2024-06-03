@@ -122,30 +122,35 @@ class MainController(tk.Tk):
 
     def _print_drone_info(self):
         fmt_string = "{0:<18}{1:12}"
-        print((fmt_string * 3).format("Drone ID", "Drone Type"))
+        print(
+            (fmt_string * 3).format("Drone ID", "Drone Type"), file=sys.stderr
+        )
 
         for idx, a_drone in enumerate(self.overlord.drones.values()):
             print(
-                fmt_string.format(id(a_drone), type(a_drone).__name__), end=""
+                fmt_string.format(id(a_drone), type(a_drone).__name__),
+                file=sys.stderr,
+                end="",
             )
             if idx % 3 == 2:
-                print()
-        print("-" * 100)
+                print(file=sys.stderr)
+        print("-" * 100, file=sys.stderr)
 
     def _map_tick_updates(
         self, maps: Mapping[int, MapData], mined: int
     ) -> None:
         for map_id, a_map in maps.items():
-            print(f"Map {map_id}")
+            print(f"Map {map_id}", file=sys.stderr)
             for a_drone in a_map.d_contexts:
                 print(
                     f"Drone ID: {id(a_drone.atron)} "
                     f"Actual Health: {a_drone.health} "
-                    f"Your Health: {a_drone.atron.health}"
+                    f"Your Health: {a_drone.atron.health}",
+                    file=sys.stderr,
                 )
             a_map.tick()
-            print(a_map)
-        print("SubTotal mined:", mined)
+            print(a_map, file=sys.stderr)
+        print("SubTotal mined:", mined, file=sys.stderr)
 
     def process_tick(
         self,
@@ -203,7 +208,7 @@ class MainController(tk.Tk):
 
             mined += self.process_tick(maps, drone_locations, drone_healths)
 
-        print("Total mined:", mined)
+        print("Total mined:", mined, file=sys.stderr)
 
 
 class LabeledEntry(tk.Frame):
