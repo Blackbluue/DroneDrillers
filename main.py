@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 import time
 import tkinter as tk
-from random import uniform
+from random import randint, uniform
 from signal import pause
 from typing import TYPE_CHECKING
 
@@ -18,6 +18,9 @@ if TYPE_CHECKING:
 
 MIN_DENSITY = 0.1
 MAX_DENSITY = 0.5
+
+MIN_DIMENSION = 10
+MAX_DIMENSION = 20
 
 
 class MainController(tk.Tk):
@@ -92,9 +95,7 @@ class MainController(tk.Tk):
         )
         self._start_mining()
 
-    def _build_maps(
-        self, count: int, width: int, height: int
-    ) -> dict[int, MapData]:
+    def _build_maps(self, count: int) -> dict[int, MapData]:
         """Build maps based on count, width, and height.
 
         If map files are given on the command line, they will be used instead.
@@ -115,7 +116,9 @@ class MainController(tk.Tk):
                 )
             else:
                 maps[map_number] = MapData(map_number).from_scratch(
-                    width, height, uniform(MIN_DENSITY, MAX_DENSITY)
+                    randint(MIN_DIMENSION, MAX_DIMENSION),
+                    randint(MIN_DIMENSION, MAX_DIMENSION),
+                    uniform(MIN_DENSITY, MAX_DENSITY),
                 )
 
             self.overlord.add_map(map_number, maps[map_number])
@@ -191,12 +194,12 @@ class MainController(tk.Tk):
         # Print out each drone's id and type
         self._print_drone_info()
 
-        maps = self._build_maps(3, 10, 5)
+        maps = self._build_maps(3)
         # Represents dictionary of drone id as key and map id as value
         drone_locations: dict[int, int | None] = {
             drone_id: None for drone_id in self.overlord.drones
         }
-        drone_healths: dict[int, int] = {
+        drone_healths = {
             drone_id: each_drone.health
             for drone_id, each_drone in self.overlord.drones.items()
         }
