@@ -6,6 +6,7 @@ import sys
 import time
 import tkinter as tk
 from random import uniform
+from signal import pause
 from typing import TYPE_CHECKING
 
 from gui import Dashboard
@@ -205,8 +206,8 @@ class MainController(tk.Tk):
             txt = f"Tick Counter: {a_tick}"
             self.overlord.dashboard.master.string_var.set(txt)
             self.overlord.dashboard.master.update_idletasks()
-
             mined += self.process_tick(maps, drone_locations, drone_healths)
+            pause()  # For testing purposes
 
         print("Total mined:", mined, file=sys.stderr)
 
