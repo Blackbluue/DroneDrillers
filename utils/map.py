@@ -61,13 +61,13 @@ class MapData:
         """
         self.map_id = map_id
         self.d_contexts: list[DroneContext] = []
-        self._data: list[list[Icon]] = []
+        self._all_icons: list[list[Icon]] = []
         self._total_minerals: list[MineralContext] = []
         self._acid: list[Coordinate] = []
         # a set of the coords of minerals and drone id tasked to mining it
         self.untasked_minerals: MutableSet[Coordinate] = set()
         self.tasked_minerals: MutableSet[Coordinate] = set()
-        self._stored_tiles_: MutableMapping[Coordinate, Tile] = {}
+        self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self.scout_count = 0
 
     def from_file(self, filename: str) -> MapData:
@@ -75,34 +75,27 @@ class MapData:
             for row, line in enumerate(fh):
                 destination = list(line.rstrip())
                 for column, char in enumerate(destination):
+                    coord = Coordinate(column, row)
                     if char == "~":
-                        self._acid.append(Coordinate(column, row))
+                        self._acid.append(coord)
                     elif char == "_":
-                        self.landing_zone = Coordinate(column, row)
+                        self.landing_zone = coord
                     elif char in "0123456789":
                         destination[column] = "*"
-                        mineral_context = MineralContext(
-                            Coordinate(column, row), int(char)
-                        )
+                        mineral_context = MineralContext(coord, int(char))
                         self._total_minerals.append(mineral_context)
 
-                self._data.append([Icon(char) for char in destination])
+                self._all_icons.append([Icon(char) for char in destination])
 
         self._set_dimensions(column, row)
         return self
 
     def from_scratch(self, width: int, height: int, density: float) -> MapData:
-        # create the box
-        self._data.append([Icon(char) for char in ["#"] * width])
-        for _ in range(height):
-            self._data.append(
-                [Icon(char) for char in f"#{' ' * (width - 2)}#"]
-            )
-        self._data.append([Icon(char) for char in ["#"] * width])
-
         self._set_dimensions(width, height)
+        self._create_box()
+
         self.landing_zone = self._get_rand_coords()
-        self[self.landing_zone] = Icon.DEPLOY_ZONE
+        self._set_actual_icon(self.landing_zone, Icon.DEPLOY_ZONE)
 
         wall_count = ((width * 2) + (height * 2)) - 4
         total_minerals = int(density * (self._total_coordinates - wall_count))
@@ -161,97 +154,9 @@ class MapData:
         """
         return [
             tile
-            for tile in self._stored_tiles_.values()
+            for tile in self._visible_tiles_.values()
             if not tile.discovered
         ]
-
-    def summary(self) -> float:
-        """Ratio of total minerals to reachable tiles.
-
-        Returns:
-            float: The ratio of total minerals to reachable tiles.
-        """
-        wall_count = sum(row.count(Icon.WALL) for row in self._data)
-        total_minerals = sum(mineral.amt for mineral in self._total_minerals)
-        return total_minerals / (self._total_coordinates - wall_count)
-
-    def remove_atron(self, atron_id: int) -> tuple[int, int] | None:
-        """Removes atron from map and returns the mineral and health.
-
-        Args:
-            atron_id (int): The id of the atron to be removed.
-
-        Returns:
-            tuple[int, int] | None:
-                The mined mineral count and health of the removed drone, or None.
-        """
-        for drone_context in self.d_contexts:
-            if (
-                atron_id == id(drone_context.atron)
-                and drone_context.context.coord == self.landing_zone
-            ):
-                self[drone_context.context.coord] = Icon.DEPLOY_ZONE
-                self.d_contexts.remove(drone_context)
-                return drone_context.mined_mineral, drone_context.health
-
-    def add_atron(self, atron: Drone, health: int) -> bool:
-        """Add an atron to the map.
-
-        The atron cannot be added to the map if the deploy zone is occupied.
-
-        Args:
-            atron (Drone): The atron to add to the map.
-            health (int): The health of the atron.
-
-        Returns:
-            bool: True if the atron was added, else False.
-        """
-        # Check if the landing zone is available
-        if self[self.landing_zone] != Icon.DEPLOY_ZONE:
-            return False
-        self[self.landing_zone] = atron.icon
-
-        context = self._build_context(self.landing_zone)
-        drone_context = DroneContext(context, atron, health)
-        self.d_contexts.append(drone_context)
-        return True
-
-    def tick(self) -> None:
-        for d_context in self.d_contexts:
-            for _ in range(d_context.atron.moves):
-                # acid damage is applied before movement
-                if d_context.context.coord in self._acid:
-                    d_context.health -= Icon.ACID.health_cost()
-                if d_context.health <= 0:
-                    self._clear_tile(d_context.context.coord)
-                    self.d_contexts.remove(d_context)
-                    break  # atron is dead move on to next
-
-                direction = d_context.atron.action(d_context.context)
-                if direction != Directions.CENTER.value:
-                    self._move_to(d_context, direction)
-
-    def _set_dimensions(self, width: int, height: int) -> None:
-        self._width = width
-        self._height = height
-        self._total_coordinates = self._width * self._height
-
-    def _get_rand_coords(self) -> Coordinate:
-        """Get a random set of coordinates on the map.
-
-        Returns:
-            Coordinate: A set of coordinates on the map.
-        """
-        x_coords: int = self._width - 2
-        y_coords: int = self._height - 2
-        coordinates = Coordinate(0, 0)
-        while self[coordinates].icon != " ":
-            # Choose a random location on map excluding walls
-            coordinates = Coordinate(
-                randint(1, x_coords),
-                randint(1, y_coords),
-            )
-        return coordinates
 
     def add_mineral(self, amt: int) -> None:
         """Adds a single mineral deposit to a random open spot in the map.
@@ -261,7 +166,7 @@ class MapData:
         """
         coordinates = self._get_rand_coords()
 
-        self[coordinates] = Icon.MINERAL
+        self._set_actual_icon(coordinates, Icon.MINERAL)
         mineral_context = MineralContext(coordinates, amt)
         self._total_minerals.append(mineral_context)
 
@@ -311,6 +216,129 @@ class MapData:
             else []
         )
 
+    def summary(self) -> float:
+        """Ratio of total minerals to reachable tiles.
+
+        Returns:
+            float: The ratio of total minerals to reachable tiles.
+        """
+        wall_count = sum(row.count(Icon.WALL) for row in self._all_icons)
+        total_minerals = sum(mineral.amt for mineral in self._total_minerals)
+        return total_minerals / (self._total_coordinates - wall_count)
+
+    def remove_atron(self, atron_id: int) -> tuple[int, int] | None:
+        """Removes atron from map and returns the mineral and health.
+
+        Args:
+            atron_id (int): The id of the atron to be removed.
+
+        Returns:
+            tuple[int, int] | None:
+                The mined mineral count and health of the removed drone, or None.
+        """
+        for drone_context in self.d_contexts:
+            if (
+                atron_id == id(drone_context.atron)
+                and drone_context.context.coord == self.landing_zone
+            ):
+                self._set_actual_icon(
+                    drone_context.context.coord, Icon.DEPLOY_ZONE
+                )
+                self.d_contexts.remove(drone_context)
+                return drone_context.mined_mineral, drone_context.health
+
+    def add_atron(self, atron: Drone, health: int) -> bool:
+        """Add an atron to the map.
+
+        The atron cannot be added to the map if the deploy zone is occupied.
+
+        Args:
+            atron (Drone): The atron to add to the map.
+            health (int): The health of the atron.
+
+        Returns:
+            bool: True if the atron was added, else False.
+        """
+        # Check if the landing zone is available
+        if self._get_actual_icon(self.landing_zone) != Icon.DEPLOY_ZONE:
+            return False
+        self._set_actual_icon(self.landing_zone, atron.icon)
+
+        context = self._build_context(self.landing_zone)
+        drone_context = DroneContext(context, atron, health)
+        self.d_contexts.append(drone_context)
+        return True
+
+    def tick(self) -> None:
+        for d_context in self.d_contexts:
+            for _ in range(d_context.atron.moves):
+                # acid damage is applied before movement
+                if d_context.context.coord in self._acid:
+                    d_context.health -= Icon.ACID.health_cost()
+                if d_context.health <= 0:
+                    self._clear_tile(d_context.context.coord)
+                    self.d_contexts.remove(d_context)
+                    break  # atron is dead move on to next
+
+                direction = d_context.atron.action(d_context.context)
+                if direction != Directions.CENTER.value:
+                    self._move_to(d_context, direction)
+
+    def _set_dimensions(self, width: int, height: int) -> None:
+        self._width = width
+        self._height = height
+        self._total_coordinates = self._width * self._height
+
+    def _create_box(self) -> None:
+        """Create a box around the map.
+
+        This function is used to create a box around the map, with walls
+        on the outer edges and empty space inside.
+        """
+        self._all_icons.append([Icon(char) for char in ["#"] * self._width])
+        for _ in range(self._height):
+            self._all_icons.append(
+                [Icon(char) for char in f"#{' ' * (self._width - 2)}#"]
+            )
+        self._all_icons.append([Icon(char) for char in ["#"] * self._width])
+
+    def _get_actual_icon(self, coord: Coordinate) -> Icon:
+        """Get the actual icon at the given coordinates.
+
+        Args:
+            coord (Coordinate): The coordinates to look up.
+
+        Returns:
+            Icon: The icon at the given coordinates.
+        """
+        return self._all_icons[coord.y][coord.x]
+
+    def _set_actual_icon(self, coord: Coordinate, icon: Icon) -> None:
+        """Set the actual icon at the given coordinates.
+
+        Args:
+            coord (Coordinate): The coordinates to set.
+            icon (Icon): The icon to set.
+        """
+        self._all_icons[coord.y][coord.x] = icon
+
+    def _get_rand_coords(self) -> Coordinate:
+        """Get a random set of coordinates on the map.
+
+        Returns:
+            Coordinate: A set of coordinates on the map.
+        """
+        x_coords: int = self._width - 2
+        y_coords: int = self._height - 2
+        coordinates = Coordinate(0, 0)
+        while self._get_actual_icon(coordinates) != Icon.EMPTY:
+            # Choose a random location on map excluding walls
+            coordinates = Coordinate(
+                randint(1, x_coords),
+                randint(1, y_coords),
+            )
+        return coordinates
+
     def _add_to_path(
         self,
         node: Coordinate,
@@ -352,10 +380,10 @@ class MapData:
 
     def _build_context(self, location: Coordinate) -> Context:
         cardinals = [
-            self[Coordinate(location.x, location.y - 1)].icon,
-            self[Coordinate(location.x, location.y + 1)].icon,
-            self[Coordinate(location.x + 1, location.y)].icon,
-            self[Coordinate(location.x - 1, location.y)].icon,
+            *map(
+                lambda coord: self._get_actual_icon(coord),
+                Coordinate(5, 5).cardinals(),
+            )
         ]
         return Context(location, *cardinals)
 
@@ -368,11 +396,11 @@ class MapData:
             pos (Coordinate): The coordinates of the tile to update.
         """
         if pos == self.landing_zone:
-            self[pos].icon = Icon.DEPLOY_ZONE
+            self._set_actual_icon(pos, Icon.DEPLOY_ZONE)
         elif pos in self._acid:
-            self[pos].icon = Icon.ACID
+            self._set_actual_icon(pos, Icon.ACID)
         else:
-            self[pos].icon = Icon.EMPTY
+            self._set_actual_icon(pos, Icon.EMPTY)
 
     def _find_mineral_context_at(
         self, pos: Coordinate
@@ -389,16 +417,15 @@ class MapData:
     def _move_to(self, d_context: DroneContext, dirc: str) -> None:
         cur_loc = d_context.context.coord
         new_location = cur_loc.translate_one(dirc)
-        new_tile = self[new_location]
 
-        match new_tile.icon:
+        match self._get_actual_icon(new_location):
             case Icon.ATRON | Icon.MINER | Icon.SCOUT:
                 pass  # Another Drone is already there
             case (
                 Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY
             ):  # Drone can move here
                 self._clear_tile(cur_loc)
-                new_tile.icon = d_context.atron.icon
+                self._set_actual_icon(new_location, d_context.atron.icon)
                 d_context.context = self._build_context(new_location)
             case Icon.WALL:  # Drone hits a wall
                 d_context.health -= Icon.WALL.health_cost()
@@ -429,11 +456,12 @@ class MapData:
         """
         if isinstance(key, Tile):
             key = key.coordinate
-        return self._stored_tiles_[key]
+        return self._visible_tiles_[key]
 
-    def __setitem__(self, key: Coordinate, val: Icon):
+    def __setitem__(self, key: Coordinate, val: Icon) -> None:
+        self._visible_tiles_[key].icon = val
         column, row = key
-        self._data[row][column] = val
+        self._all_icons[row][column] = val
 
     def __iter__(self):
         """Iterate over this map.
@@ -441,7 +469,7 @@ class MapData:
         Yields:
             _type_: The iterator.
         """
-        yield from self._stored_tiles_
+        yield from self._visible_tiles_
 
     def __repr__(self) -> str:
         """Return a representation of this object.
@@ -451,9 +479,9 @@ class MapData:
         Returns:
             str: The string representation of this object.
         """
-        return f"Map({list(self._stored_tiles_)})"
+        return f"Map({list(self._visible_tiles_)})"
 
     def __str__(self) -> str:
         return "\n".join(
-            "".join([char.value for char in row]) for row in self._data
+            "".join([char.value for char in row]) for row in self._all_icons
         )

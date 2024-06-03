@@ -52,7 +52,7 @@ class MapWindow(tkinter.Toplevel):
 
     def update(self, zerg_on_map) -> None:
         """Update MapWindow with any updated coordinates."""
-        for tile in self.physical_map._stored_tiles_.values():
+        for tile in self.physical_map._visible_tiles_.values():
             self.translate_tile(tile)
         for drone_info in zerg_on_map:
             zerg_tile = Tile(drone_info["coord"], drone_info["icon"])
