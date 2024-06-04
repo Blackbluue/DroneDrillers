@@ -46,11 +46,8 @@ class MainController(tk.Tk):
             self, "Refresh Delay (sec):", MainController.default_refresh
         )
 
-        self.message = tk.Label(self, text=" ")
-        self.message.pack()
-
         self.start_button = tk.Button(
-            self, command=self._get_the_ball_rolling, text="Start"
+            self, command=self._start_button_handler, text="Start"
         )
 
         self.string_var = tk.StringVar()
@@ -61,35 +58,16 @@ class MainController(tk.Tk):
 
         self.dashboard = Dashboard(self)
 
-    def _initialize_values(self):
+    def _initialize_values(self) -> None:
+        """Initialize game values from the GUI."""
         self.tick_count = int(self.ticks.entry.get())
         self.refined_count = int(self.refined.entry.get())
         self.refresh_delay = float(self.refresh.entry.get())
 
-    def _reset_entry(self, widget, default_value):
-        widget.delete(0, tk.END)
-        widget.insert(tk.END, default_value)
-        widget["fg"] = "Red"
-
-    def _reset_entries(self):
-        self._reset_entry(self.ticks.entry, MainController.default_ticks)
-        self._reset_entry(self.refined.entry, MainController.default_refined)
-        self._reset_entry(self.refresh.entry, MainController.default_refresh)
-
-    def _initialize_user_values(self):
-        try:
-            self._initialize_values()
-        except Exception:
-            self.message["text"] = "Invalid Value(s) : Reset to Defaults"
-            self.message["fg"] = "Red"
-
-            self._reset_entries()
-            self._initialize_values()
-
-    def _get_the_ball_rolling(self):
-        """Registered with start button"""
+    def _start_button_handler(self) -> None:
+        """Start the game."""
         self.start_button.destroy()
-        self._initialize_user_values()
+        self._initialize_values()
         self.overlord = Overlord(
             self.tick_count, self.refined_count, self.dashboard
         )
