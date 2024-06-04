@@ -1,3 +1,5 @@
+"""Overlord, who oversees atron drones and assigns tasks to them."""
+
 from __future__ import annotations
 
 from queue import SimpleQueue

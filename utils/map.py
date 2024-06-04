@@ -25,7 +25,15 @@ if TYPE_CHECKING:
 
 
 class MineralContext:
+    """A context object for a mineral deposit."""
+
     def __init__(self, location: Coordinate, amt: int) -> None:
+        """Initialize a MineralContext object.
+
+        Args:
+            location (Coordinate): The location of the mineral.
+            amt (int): The amount of the mineral.
+        """
         self.loc: Coordinate = location
         self.amt: int = amt
 
@@ -34,7 +42,16 @@ class MineralContext:
 
 
 class DroneContext:
+    """A context object for a drone."""
+
     def __init__(self, context: Context, atron: Drone, health: int) -> None:
+        """Initialize a DroneContext object.
+
+        Args:
+            context (Context): The context of the drone.
+            atron (Drone): The drone object.
+            health (int): The health of the drone.
+        """
         self.context: Context = context
         self.atron: Drone = atron
         # TODO: This should be maintained independent of whichever map they are on
@@ -71,6 +88,14 @@ class MapData:
         self.scout_count = 0
 
     def from_file(self, filename: str) -> MapData:
+        """Read a map from a file.
+
+        Args:
+            filename (str): The name of the file to read.
+
+        Returns:
+            MapData: The map object.
+        """
         with open(filename) as fh:
             for row, line in enumerate(fh):
                 destination = list(line.rstrip())
@@ -91,6 +116,16 @@ class MapData:
         return self
 
     def from_scratch(self, width: int, height: int, density: float) -> MapData:
+        """Create a map from scratch.
+
+        Args:
+            width (int): The width of the map.
+            height (int): The height of the map.
+            density (float): The density of minerals in the map.
+
+        Returns:
+            MapData: The map object.
+        """
         self._set_dimensions(width, height)
         self._create_box()
 
@@ -270,6 +305,7 @@ class MapData:
         return True
 
     def tick(self) -> None:
+        """Update the map for the next tick."""
         for d_context in self.d_contexts:
             for _ in range(d_context.atron.moves):
                 # acid damage is applied before movement
@@ -285,6 +321,12 @@ class MapData:
                     self._move_to(d_context, direction)
 
     def _set_dimensions(self, width: int, height: int) -> None:
+        """Set the dimensions of the map.
+
+        Args:
+            width (int): The width of the map.
+            height (int): The height of the map.
+        """
         self._width = width
         self._height = height
         self._total_coordinates = self._width * self._height
@@ -346,6 +388,14 @@ class MapData:
         parents_map: MutableMapping[Coordinate, Coordinate],
         pqueue: PriorityQueue[tuple[int, Coordinate]],
     ) -> None:
+        """Add neighbors to the path.
+
+        Args:
+            node (Coordinate): Starting node.
+            neighbors (Iterable[Coordinate]): Neighbors of the node.
+            parents_map (MutableMapping[Coordinate, Coordinate]): Map of path.
+            pqueue (PriorityQueue[tuple[int, Coordinate]]): Final path.
+        """
         for neighbor_coord in neighbors:
             if (neighbor := self.get(neighbor_coord, None)) is None:
                 # tile not in map
@@ -362,6 +412,16 @@ class MapData:
         end: Coordinate,
         parents_map: MutableMapping[Coordinate, Coordinate],
     ) -> MutableSequence[Coordinate]:
+        """Build the final path from start to end.
+
+        Args:
+            start (Coordinate): The starting point.
+            end (Coordinate): The ending point.
+            parents_map (MutableMapping[Coordinate, Coordinate]): The path.
+
+        Returns:
+            MutableSequence[Coordinate]: The final path.
+        """
         curr = end
         final_path: list[Coordinate] = [end]
         while curr != start:
@@ -375,10 +435,24 @@ class MapData:
         return final_path
 
     def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
+        """Track the mineral at the given coordinates.
+
+        Args:
+            icon (Icon): The icon of the mineral.
+            coordinate (Coordinate): The coordinates of the mineral.
+        """
         if icon == Icon.MINERAL and coordinate not in self.tasked_minerals:
             self.untasked_minerals.add(coordinate)
 
     def _build_context(self, location: Coordinate) -> Context:
+        """Build a context object for the given location.
+
+        Args:
+            location (Coordinate): The location to build the context for.
+
+        Returns:
+            Context: The context object.
+        """
         cardinals = [
             *map(
                 lambda coord: self._get_actual_icon(coord),
@@ -405,16 +479,38 @@ class MapData:
     def _find_mineral_context_at(
         self, pos: Coordinate
     ) -> MineralContext | None:
+        """Find the mineral context at the given coordinates.
+
+        Args:
+            pos (Coordinate): The coordinates to look up.
+
+        Returns:
+            MineralContext | None: The mineral context at the given coordinates.
+        """
         for mineral_context in self._total_minerals:
             if mineral_context.loc == pos:
                 return mineral_context
 
     def _find_atron_context_at(self, pos: Coordinate) -> DroneContext | None:
+        """Find the atron context at the given coordinates.
+
+        Args:
+            pos (Coordinate): The coordinates to look up.
+
+        Returns:
+            DroneContext | None: The atron context at the given coordinates.
+        """
         for drone_context in self.d_contexts:
             if drone_context.context.coord == pos:
                 return drone_context
 
     def _move_to(self, d_context: DroneContext, dirc: str) -> None:
+        """Move the drone in the given direction.
+
+        Args:
+            d_context (DroneContext): The drone context to move.
+            dirc (str): The direction to move the drone.
+        """
         cur_loc = d_context.context.coord
         new_location = cur_loc.translate_one(dirc)
 
@@ -459,6 +555,12 @@ class MapData:
         return self._visible_tiles_[key]
 
     def __setitem__(self, key: Coordinate, val: Icon) -> None:
+        """Set the icon for the tile at the given coordinates.
+
+        Args:
+            key (Coordinate): The coordinates of the tile.
+            val (Icon): The icon to set.
+        """
         self._visible_tiles_[key].icon = val
         column, row = key
         self._all_icons[row][column] = val

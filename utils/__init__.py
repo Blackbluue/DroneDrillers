@@ -1,3 +1,5 @@
+"""Series of classes and functions to help with the game."""
+
 from .context import Context
 from .coordinate import Coordinate
 from .directions import Directions

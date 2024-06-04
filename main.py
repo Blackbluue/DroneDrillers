@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""Main controller for the Atron Mining Expedition."""
 
 from __future__ import annotations
 
@@ -30,7 +31,7 @@ class MainController(tk.Tk):
     default_refined = "100"
     default_refresh = "0.1"  # refresh delay in seconds
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
@@ -73,20 +74,19 @@ class MainController(tk.Tk):
         )
         self._start_mining()
 
-    def _build_maps(self, count: int) -> dict[int, MapData]:
+    def _build_maps(self, count: int) -> Mapping[int, MapData]:
         """Build maps based on count, width, and height.
 
         If map files are given on the command line, they will be used instead.
 
         Args:
             count (int): Number of maps to build
-            width (int): Width of each map
-            height (int): Height of each map
 
         Returns:
-            dict[int, Map]: Dictionary of map id as key and Map as value
+            MutableMapping[int, MapData]:
+                Mapping of map id as key and MapData as value
         """
-        maps: dict[int, MapData] = {}
+        maps: MutableMapping[int, MapData] = {}
         for map_number in range(count):
             if sys.argv[1:]:  # Overwrite from file if indicated
                 maps[map_number] = MapData(map_number).from_file(
@@ -102,7 +102,8 @@ class MainController(tk.Tk):
             self.overlord.add_map(map_number, maps[map_number])
         return maps
 
-    def _print_drone_info(self):
+    def _print_drone_info(self) -> None:
+        """Print out drone information."""
         fmt_string = "{0:<18}{1:12}"
         print(
             (fmt_string * 3).format("Drone ID", "Drone Type"), file=sys.stderr
@@ -121,6 +122,12 @@ class MainController(tk.Tk):
     def _map_tick_updates(
         self, maps: Mapping[int, MapData], mined: int
     ) -> None:
+        """Update the maps and print out the status.
+
+        Args:
+            maps (Mapping[int, MapData]): The maps to update.
+            mined (int): The total mined minerals.
+        """
         for map_id, a_map in maps.items():
             print(f"Map {map_id}", file=sys.stderr)
             for a_drone in a_map.d_contexts:
@@ -140,6 +147,16 @@ class MainController(tk.Tk):
         drone_locations: MutableMapping[int, int | None],
         drone_healths: MutableMapping[int, int],
     ) -> int:
+        """Process a tick of the game.
+
+        Args:
+            maps (Mapping[int, MapData]): The maps to process.
+            drone_locations (MutableMapping[int, int  |  None]): The drone locations.
+            drone_healths (MutableMapping[int, int]): The drone healths.
+
+        Returns:
+            int: The total mined minerals.
+        """
         mined = 0
         action = self.overlord.action()
         if action.startswith("DEPLOY"):
@@ -169,7 +186,7 @@ class MainController(tk.Tk):
             exit(-1)
 
     def _start_mining(self) -> None:
-        # Print out each drone's id and type
+        """Start the mining expedition."""
         self._print_drone_info()
 
         maps = self._build_maps(3)
@@ -194,7 +211,18 @@ class MainController(tk.Tk):
 
 
 class LabeledEntry(tk.Frame):
-    def __init__(self, owner, label, default):
+    """A labeled entry widget."""
+
+    def __init__(
+        self, owner: MainController, label: str, default: str
+    ) -> None:
+        """Create a labeled entry.
+
+        Args:
+            owner (MainController): The owner of the LabeledEntry.
+            label (str): The name of the label.
+            default (str): The default text for the label.
+        """
         super().__init__(owner)
         self.label = tk.Label(self, text=label, width=20)
         self.label.pack(side=tk.LEFT)
@@ -203,8 +231,19 @@ class LabeledEntry(tk.Frame):
         self.entry.pack(side=tk.LEFT)
 
     @staticmethod
-    def create(owner, label, default):
-        """Factory method to create and pack with label and default text"""
+    def create(
+        owner: MainController, label: str, default: str
+    ) -> LabeledEntry:
+        """Factory method to create and pack with label and default text.
+
+        Args:
+            owner (MainController): The owner of the LabeledEntry.
+            label (str): The name of the label.
+            default (str): The default text for the label.
+
+        Returns:
+            LabeledEntry: The created LabeledEntry.
+        """
         labeled_entry = LabeledEntry(owner, label, default)
         labeled_entry.pack()
         return labeled_entry
