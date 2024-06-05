@@ -15,6 +15,7 @@ from utils import MapData
 
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping
+    from typing import Any
 
 MIN_DENSITY = 0.1
 MAX_DENSITY = 0.5
@@ -22,55 +23,43 @@ MAX_DENSITY = 0.5
 MIN_DIMENSION = 10
 MAX_DIMENSION = 20
 
+DEFAULT_TICKS = 10
+DEFAULT_REFINED = 100
+DEFAULT_REFRESH = 0.1  # refresh delay in seconds
+
 
 class MainController(tk.Tk):
     """Sample code controller."""
-
-    default_ticks = "100"
-    default_refined = "100"
-    default_refresh = "0.1"  # refresh delay in seconds
 
     def __init__(self) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
         self.geometry("400x150+0+0")
-
-        self.ticks = LabeledEntry.create(
-            self, "Ticks:", MainController.default_ticks
-        )
-        self.refined = LabeledEntry.create(
-            self, "Refined Minerals:", MainController.default_refined
-        )
-        self.refresh = LabeledEntry.create(
-            self, "Refresh Delay (sec):", MainController.default_refresh
-        )
-
-        self.start_button = tk.Button(
-            self, command=self._start_button_handler, text="Start"
-        )
-
-        self.string_var = tk.StringVar()
-        self.string_var.set("Tick Counter:")
-        tk.Entry(self, textvariable=self.string_var, width=30).pack()
-
-        self.start_button.pack()
-
-        self.dashboard = Dashboard(self)
+        self._initialize_values()
 
     def _initialize_values(self) -> None:
         """Initialize game values from the GUI."""
-        self.tick_count = int(self.ticks.entry.get())
-        self.refined_count = int(self.refined.entry.get())
-        self.refresh_delay = float(self.refresh.entry.get())
+        self.ticks = LabeledEntry(self, "Ticks:", DEFAULT_TICKS)
+        self.refined = LabeledEntry(self, "Refined Minerals:", DEFAULT_REFINED)
+        self.refresh = LabeledEntry(
+            self, "Refresh Delay (sec):", DEFAULT_REFRESH
+        )
+        self.string_var = tk.StringVar()
+        self.string_var.set("Tick Counter:")
+        tk.Entry(self, textvariable=self.string_var, width=30).pack()
+        self.start_button = tk.Button(
+            self, command=self._start_button_handler, text="Start"
+        )
+        self.start_button.pack()
+        self.dashboard = Dashboard(self)
+        self.overlord = Overlord(
+            DEFAULT_TICKS, DEFAULT_REFINED, self.dashboard
+        )
 
     def _start_button_handler(self) -> None:
         """Start the game."""
         self.start_button.destroy()
-        self._initialize_values()
-        self.overlord = Overlord(
-            self.tick_count, self.refined_count, self.dashboard
-        )
         self._start_mining()
 
     def _build_maps(self, count: int) -> Mapping[int, MapData]:
@@ -180,7 +169,7 @@ class MainController(tk.Tk):
                 print(f"Unknown action: {action}", file=sys.stderr)
 
         self._map_tick_updates(maps, mined)
-        time.sleep(self.refresh_delay)
+        time.sleep(DEFAULT_REFRESH)
         return mined
 
     def _start_mining(self) -> None:
@@ -198,7 +187,7 @@ class MainController(tk.Tk):
         }
 
         mined = 0
-        for a_tick in range(self.tick_count):
+        for a_tick in range(DEFAULT_TICKS):
             txt = f"Tick Counter: {a_tick}"
             self.overlord.dashboard.master.string_var.set(txt)
             self.overlord.dashboard.master.update_idletasks()
@@ -211,39 +200,22 @@ class LabeledEntry(tk.Frame):
     """A labeled entry widget."""
 
     def __init__(
-        self, owner: MainController, label: str, default: str
+        self, owner: MainController, label: str, default: Any
     ) -> None:
         """Create a labeled entry.
 
         Args:
             owner (MainController): The owner of the LabeledEntry.
             label (str): The name of the label.
-            default (str): The default text for the label.
+            default (Any): The default value for the label.
         """
         super().__init__(owner)
         self.label = tk.Label(self, text=label, width=20)
         self.label.pack(side=tk.LEFT)
         self.entry = tk.Entry(self, width=5)
-        self.entry.insert(tk.END, default)
+        self.entry.insert(tk.END, str(default))
         self.entry.pack(side=tk.LEFT)
-
-    @staticmethod
-    def create(
-        owner: MainController, label: str, default: str
-    ) -> LabeledEntry:
-        """Factory method to create and pack with label and default text.
-
-        Args:
-            owner (MainController): The owner of the LabeledEntry.
-            label (str): The name of the label.
-            default (str): The default text for the label.
-
-        Returns:
-            LabeledEntry: The created LabeledEntry.
-        """
-        labeled_entry = LabeledEntry(owner, label, default)
-        labeled_entry.pack()
-        return labeled_entry
+        self.pack()
 
 
 if __name__ == "__main__":
