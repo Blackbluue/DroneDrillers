@@ -27,7 +27,7 @@ class Coordinate(NamedTuple):
             other_coord (Coordinate): The other coordinate.
 
         Returns:
-            Tuple[int, int]: The distance difference, as (x, y) tuple.
+            tuple[int, int]: The distance difference, as (x, y) tuple.
         """
         return (other_coord.x - self.x, other_coord.y - self.y)
 
@@ -46,7 +46,7 @@ class Coordinate(NamedTuple):
             y (int): The y value of the other coordinate.
 
         Returns:
-            Tuple[int, int]: The distance difference, as (x, y) tuple.
+            tuple[int, int]: The distance difference, as (x, y) tuple.
         """
         return (x - self.x, y - self.y)
 
@@ -87,14 +87,11 @@ class Coordinate(NamedTuple):
             return ""  # can't determine direction
         if x_offset > 0:
             return "east"
-        elif x_offset < 0:
+        if x_offset < 0:
             return "west"
-        elif y_offset < 0:
+        if y_offset < 0:
             return "north"
-        elif y_offset > 0:
-            return "south"
-        else:  # x_offset == 0 and y_offset == 0
-            return "center"
+        return "south" if y_offset > 0 else "center"
 
     def cardinals(
         self,
@@ -132,16 +129,17 @@ class Coordinate(NamedTuple):
                 direction = Directions[direction.upper()]
             except KeyError:
                 raise ValueError(f"Unknown  direction: {direction}") from None
-        if direction == Directions.NORTH:
-            return self._replace(y=self.y - 1)  # pylint: disable=no-member
-        elif direction == Directions.SOUTH:
-            return self._replace(y=self.y + 1)  # pylint: disable=no-member
-        elif direction == Directions.EAST:
-            return self._replace(x=self.x + 1)  # pylint: disable=no-member
-        elif direction == Directions.WEST:
-            return self._replace(x=self.x - 1)  # pylint: disable=no-member
-        else:
-            return Coordinate(*self)
+        match direction:
+            case Directions.NORTH:
+                return self._replace(y=self.y - 1)  # pylint: disable=no-member
+            case Directions.SOUTH:
+                return self._replace(y=self.y + 1)  # pylint: disable=no-member
+            case Directions.EAST:
+                return self._replace(x=self.x + 1)  # pylint: disable=no-member
+            case Directions.WEST:
+                return self._replace(x=self.x - 1)  # pylint: disable=no-member
+            case _:  # Directions.CENTER
+                return Coordinate(*self)
 
     def translate(self, x_offset: int, y_offset: int) -> Coordinate:
         """Translate this coordinate in the given direction.
