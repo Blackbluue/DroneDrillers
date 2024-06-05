@@ -133,13 +133,13 @@ class Coordinate(NamedTuple):
             except KeyError:
                 raise ValueError(f"Unknown  direction: {direction}") from None
         if direction == Directions.NORTH:
-            return self._replace(y=self.y - 1)
+            return self._replace(y=self.y - 1)  # pylint: disable=no-member
         elif direction == Directions.SOUTH:
-            return self._replace(y=self.y + 1)
+            return self._replace(y=self.y + 1)  # pylint: disable=no-member
         elif direction == Directions.EAST:
-            return self._replace(x=self.x + 1)
+            return self._replace(x=self.x + 1)  # pylint: disable=no-member
         elif direction == Directions.WEST:
-            return self._replace(x=self.x - 1)
+            return self._replace(x=self.x - 1)  # pylint: disable=no-member
         else:
             return Coordinate(*self)
 
@@ -157,4 +157,6 @@ class Coordinate(NamedTuple):
         Returns:
             Coordinate: The translated coordinate object
         """
-        return self._replace(x=self.x + x_offset, y=self.y + y_offset)
+        return self._replace(  # pylint: disable=no-member
+            x=self.x + x_offset, y=self.y + y_offset
+        )
