@@ -221,9 +221,5 @@ class LabeledEntry(tk.Frame):
 if __name__ == "__main__":
     try:
         MainController().mainloop()
-    except (Exception, GeneratorExit, KeyboardInterrupt) as e:
-        name = type(e).__name__
-        print(
-            f"Exception of type, {name}, prevented program from continuing",
-            file=sys.stderr,
-        )
+    except KeyboardInterrupt as e:
+        print("Exiting due to interrupt", file=sys.stderr)
