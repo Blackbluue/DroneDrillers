@@ -158,25 +158,27 @@ class MainController(tk.Tk):
             int: The total mined minerals.
         """
         mined = 0
-        action = self.overlord.action()
-        if action.startswith("DEPLOY"):
-            drone_id, map_id = action[6:].split()
-            drone_id = int(drone_id)
-            map_id = int(map_id)
-
-            if drone_locations[drone_id] is None:
-                if maps[map_id].add_atron(
+        action, _, opts = self.overlord.action().partition(" ")
+        match action:
+            case "RETURN":
+                drone_id = next(map(int, opts.split()))
+                if (map_id := drone_locations[drone_id]) is not None:
+                    if res := maps[map_id].remove_atron(drone_id):
+                        extracted, health = res
+                        drone_locations[drone_id] = None  # Not on map anymore
+                        drone_healths[drone_id] = health
+                        mined += extracted
+            case "DEPLOY":
+                drone_id, map_id = map(int, opts.split())
+                # check if drone is already deployed
+                if drone_locations[drone_id] is None and maps[
+                    map_id
+                ].add_atron(
                     self.overlord.drones[drone_id], drone_healths[drone_id]
                 ):
                     drone_locations[drone_id] = map_id
-        elif action.startswith("RETURN"):
-            drone_id = int(action[6:])
-            if (map_id := drone_locations[drone_id]) is not None:
-                if res := maps[map_id].remove_atron(drone_id):
-                    extracted, health = res
-                    drone_locations[drone_id] = None  # Not on map anymore
-                    drone_healths[drone_id] = health
-                    mined += extracted
+            case _:  # Ignore other actions
+                print(f"Unknown action: {action}", file=sys.stderr)
 
         self._map_tick_updates(maps, mined)
         try:
