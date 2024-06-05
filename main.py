@@ -7,7 +7,6 @@ import sys
 import time
 import tkinter as tk
 from random import randint, uniform
-from signal import pause
 from typing import TYPE_CHECKING
 
 from gui import Dashboard
@@ -181,11 +180,8 @@ class MainController(tk.Tk):
                 print(f"Unknown action: {action}", file=sys.stderr)
 
         self._map_tick_updates(maps, mined)
-        try:
-            time.sleep(self.refresh_delay)
-            return mined
-        except KeyboardInterrupt:
-            exit(-1)
+        time.sleep(self.refresh_delay)
+        return mined
 
     def _start_mining(self) -> None:
         """Start the mining expedition."""
@@ -207,7 +203,6 @@ class MainController(tk.Tk):
             self.overlord.dashboard.master.string_var.set(txt)
             self.overlord.dashboard.master.update_idletasks()
             mined += self.process_tick(maps, drone_locations, drone_healths)
-            pause()  # For testing purposes
 
         print("Total mined:", mined, file=sys.stderr)
 
