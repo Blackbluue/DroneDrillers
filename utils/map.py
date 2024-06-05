@@ -70,13 +70,8 @@ class MapData:
         None: 1,
     }
 
-    def __init__(self, map_id: int) -> None:
-        """Initialize a Map object.
-
-        Args:
-            map_id (int): The ID of the map.
-        """
-        self.map_id = map_id
+    def __init__(self) -> None:
+        """Initialize a Map object."""
         self.d_contexts: list[DroneContext] = []
         self._all_icons: list[list[Icon]] = []
         self._total_minerals: list[MineralContext] = []

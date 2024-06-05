@@ -82,7 +82,7 @@ class Dashboard(tkinter.Toplevel):
             physical_map (Map) : A map that will be loaded into the
             object.
         """
-        new_map = MapWindow(self, f"Map {physical_map.map_id}", physical_map)
+        new_map = MapWindow(self, "Mining Map", physical_map)
         new_map.prepare_MapWindow()
         self.map_dict[new_map] = physical_map
 
