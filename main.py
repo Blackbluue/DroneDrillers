@@ -189,8 +189,8 @@ class MainController(tk.Tk):
         mined = 0
         for a_tick in range(DEFAULT_TICKS):
             txt = f"Tick Counter: {a_tick}"
-            self.overlord.dashboard.master.string_var.set(txt)
-            self.overlord.dashboard.master.update_idletasks()
+            self.string_var.set(txt)
+            self.update_idletasks()
             mined += self.process_tick(maps, drone_locations, drone_healths)
 
         print("Total mined:", mined, file=sys.stderr)
