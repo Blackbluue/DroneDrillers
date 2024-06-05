@@ -3,12 +3,9 @@
 from __future__ import annotations
 
 from functools import singledispatchmethod
-from typing import TYPE_CHECKING, NamedTuple
+from typing import NamedTuple
 
 from .directions import Directions
-
-if TYPE_CHECKING:
-    from typing import Union
 
 
 class Coordinate(NamedTuple):
@@ -117,7 +114,7 @@ class Coordinate(NamedTuple):
             self.translate_one(Directions.WEST),
         )
 
-    def translate_one(self, direction: Union[str, Directions]) -> Coordinate:
+    def translate_one(self, direction: str | Directions) -> Coordinate:
         """Translate this coordinate in the given direction.
 
         Translation moves the coordinate by 1 space in the given direction.
@@ -125,7 +122,7 @@ class Coordinate(NamedTuple):
         given, this coordinate is copied and returned.
 
         Args:
-            direction (Directions): The direction to translate.
+            direction (str | Directions): The direction to translate.
 
         Returns:
             Coordinate: The translated coordinate object.
