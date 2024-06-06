@@ -57,7 +57,7 @@ class MapData:
         Returns:
             MapData: The map object.
         """
-        with open(filename) as fh:
+        with open(filename, encoding="utf-8") as fh:
             for row, line in enumerate(fh):
                 destination = list(line.rstrip())
                 for column, char in enumerate(destination):
