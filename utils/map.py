@@ -399,10 +399,7 @@ class MapData:
             Context: The context object.
         """
         cardinals = [
-            *map(
-                lambda coord: self._get_actual_icon(coord),
-                Coordinate(5, 5).cardinals(),
-            )
+            *map(self._get_actual_icon, Coordinate(5, 5).cardinals())
         ]
         return Context(location, *cardinals)
 
