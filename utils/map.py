@@ -23,17 +23,17 @@ if TYPE_CHECKING:
 
     from units.ally.drones import Drone
 
+_NODE_WEIGHTS = {
+    Icon.EMPTY: 1,
+    Icon.ATRON: 1,
+    Icon.DEPLOY_ZONE: 1,
+    Icon.ACID: 10,
+    None: 1,
+}
 
 class MapData:
     """A map object, used to describe the tile layout of an area."""
 
-    NODE_WEIGHTS = {
-        Icon.EMPTY: 1,
-        Icon.ATRON: 1,
-        Icon.DEPLOY_ZONE: 1,
-        Icon.ACID: 10,
-        None: 1,
-    }
 
     def __init__(self) -> None:
         """Initialize a Map object."""
@@ -345,11 +345,11 @@ class MapData:
             if (neighbor := self.get(neighbor_coord, None)) is None:
                 # tile not in map
                 continue
-            if neighbor.icon and neighbor.icon not in self.NODE_WEIGHTS:
+            if neighbor.icon and neighbor.icon not in _NODE_WEIGHTS:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((self.NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
+            pqueue.put((_NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
 
     def _build_final_path(
         self,
