@@ -30,7 +30,7 @@ class Drone(Atron):
         self._overlord = overlord
         self._payload = 0
         self._path_to_goal: MutableSequence[Coordinate] = []
-        self.context: Context = DEFAULT_CONTEXT
+        self._context: Context = DEFAULT_CONTEXT
 
     @property
     def capacity(self) -> int:
@@ -69,6 +69,24 @@ class Drone(Atron):
             int: The drone's max moves.
         """
         return self.max_moves
+
+    @property
+    def context(self) -> Context:
+        """The context surrounding this drone.
+
+        Returns:
+            Context: The context.
+        """
+        return self._context
+
+    @context.setter
+    def context(self, new_context: Context) -> None:
+        """Set the context surrounding this drone.
+
+        Args:
+            new_context (Context): The new context.
+        """
+        self._context = new_context
 
     @property
     def path(self) -> MutableSequence[Coordinate]:
