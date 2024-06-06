@@ -54,10 +54,19 @@ class MainController(tk.Tk):
             self, command=self._start_button_handler, text="Start"
         )
         self.start_button.pack()
-        self.dashboard = Dashboard(self)
-        self.overlord = Overlord(
-            DEFAULT_TICKS, DEFAULT_REFINED, self.dashboard
-        )
+        self._overlord = Overlord()
+        if sys.argv[1:]:  # Overwrite from file if indicated
+            self._mining_map = MapData().from_file(sys.argv.pop(1))
+        else:
+            self._mining_map = MapData().from_scratch(
+                randint(MIN_DIMENSION, MAX_DIMENSION),
+                randint(MIN_DIMENSION, MAX_DIMENSION),
+                uniform(MIN_DENSITY, MAX_DENSITY),
+            )
+
+        self._dashboard = Dashboard(self)
+        self._dashboard.create_map_gui(self._mining_map)
+        self._overlord.set_map(self._mining_map)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
@@ -71,7 +80,7 @@ class MainController(tk.Tk):
             (fmt_string * 3).format("Drone ID", "Drone Type"), file=sys.stderr
         )
 
-        for idx, a_drone in enumerate(self.overlord.drones.values()):
+        for idx, a_drone in enumerate(self._overlord.drones.values()):
             print(
                 fmt_string.format(id(a_drone), type(a_drone).__name__),
                 file=sys.stderr,
@@ -95,20 +104,20 @@ class MainController(tk.Tk):
             int: The total mined minerals.
         """
         mined = 0
-        action, _, opts = self.overlord.action().partition(" ")
+        action, _, opts = self._overlord.action().partition(" ")
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
-                mined +=mining_map.remove_drone(self.overlord.drones[drone_id])
+                mined +=mining_map.remove_drone(self._overlord.drones[drone_id])
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
-                mining_map.add_drone(self.overlord.drones[drone_id])
+                mining_map.add_drone(self._overlord.drones[drone_id])
             case _:  # Ignore other actions
                 print(f"Unknown action: {action}", file=sys.stderr)
 
         deployed_drones = list(
-            filter(lambda drone: drone.deployed, self.overlord.drones.values()))
+            filter(lambda drone: drone.deployed, self._overlord.drones.values()))
         map_tick_updates(mining_map, deployed_drones)
         print("SubTotal mined:", mined, file=sys.stderr)
         time.sleep(DEFAULT_REFRESH)
@@ -118,14 +127,11 @@ class MainController(tk.Tk):
         """Start the mining expedition."""
         self._print_drone_info()
 
-        mining_map = build_map(self.overlord)
-
         mined = 0
         for a_tick in range(DEFAULT_TICKS):
-            txt = f"Tick Counter: {a_tick}"
-            self.string_var.set(txt)
+            self.string_var.set(f"Tick Counter: {a_tick}")
             self.update_idletasks()
-            mined += self.process_tick(mining_map)
+            mined += self.process_tick(self._mining_map)
 
         print("Total mined:", mined, file=sys.stderr)
 
@@ -151,31 +157,6 @@ class LabeledEntry(tk.Frame):
         self.entry.pack(side=tk.LEFT)
         self.pack()
 
-
-def build_map(overlord: Overlord) -> MapData:
-    """Build a map to add to the overlord.
-
-    If a map file is given on the command line, it will be used. Otherwise,
-    a random map will be generated.
-
-    Args:
-        overlord (Overlord): The overlord to add the map to.
-
-    Returns:
-        MapData: The MapData object.
-    """
-    mining_map = MapData()
-    if sys.argv[1:]:  # Overwrite from file if indicated
-        mining_map.from_file(sys.argv.pop(1))
-    else:
-        mining_map.from_scratch(
-            randint(MIN_DIMENSION, MAX_DIMENSION),
-            randint(MIN_DIMENSION, MAX_DIMENSION),
-            uniform(MIN_DENSITY, MAX_DENSITY),
-        )
-
-    overlord.add_map(0, mining_map)
-    return mining_map
 
 def map_tick_updates(mining_map: MapData, drones: Iterable[Drone]) -> None:
     """Process map tick and print out the status.

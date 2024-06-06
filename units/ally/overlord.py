@@ -14,49 +14,28 @@ if TYPE_CHECKING:
     from collections.abc import MutableMapping
     from typing import Optional, Type
 
-    from gui.dashboard import Dashboard
-
+DEFAULT_HEALTH = 10
 
 class Overlord(Atron):
     """Overlord, who oversees atron drones and assigns tasks to them."""
 
-    def __init__(
-        self,
-        total_ticks: int,
-        refined_minerals: int,
-        dashboard: Dashboard,
-    ) -> None:
-        """Initialize the Overlord.
-
-        Args:
-            total_ticks (int): Total ticks allowed for mining.
-            refined_minerals (int): Total given minerals.
-            dashboard (Dashboard): The GUI dashboard.
-        """
-        self.dashboard = dashboard
+    def __init__(self) -> None:
+        """Initialize the Overlord."""
+        super().__init__(DEFAULT_HEALTH)
         self.drones: MutableMapping[int, Drone] = {}
         # a drone id as key and drone as value
-
-        self._deployed: MutableMapping[int, Optional[MapData]] = {}
-        # a drone id as key and map id as value
 
         self._idle_drones: MutableMapping[Type[Drone], set[Drone]] = {}
         self._update_queue: SimpleQueue[tuple[MapData, Drone, Context]] = (
             SimpleQueue()
         )
-        # a queue of map updates from zerg drones
+        # a queue of map updates from drones
 
         self._pickup_queue: SimpleQueue[tuple[MapData, Drone]] = SimpleQueue()
         # a queue of pick up requests from drones
 
-        self._maps: MutableMapping[int, MapData] = {}
-        # a map id as key and Map as value
-
-        # scouts, miners, classes = self._create_drone_classes(refined_minerals)
-        # for _ in range(scouts):
-        #     self._create_drone(classes["Scout"])
-        # for _ in range(miners):
-        #     self._create_drone(classes["Miner"])
+        self._mining_map: MapData | None = None
+        # the current mining map
 
     def _create_drone_classes(self, minerals: int) -> tuple[int, int, dict]:
         """Create custom drone classes based on number of minerals.
@@ -71,16 +50,13 @@ class Overlord(Atron):
         """
         return (0, 0, {})
 
-    def add_map(self, map_id: int, physical_map: MapData) -> None:
-        """Register ID for map and summary of mineral density.
+    def set_map(self, mining_map: MapData) -> None:
+        """Register the mining map to the overlord.
 
         Args:
-            map_id (int): The id of the map.
-            summary (float): The density of minerals in the map.
+            mining_map (MapData): The map to register.
         """
-        self._maps[map_id] = physical_map
-        self.dashboard.create_map_gui(physical_map)
-        self.dashboard.update_drone_table(self.drones.values())
+        self._mining_map = mining_map
 
     def action(self, context=None) -> str:
         # sourcery skip: assign-if-exp, reintroduce-else
