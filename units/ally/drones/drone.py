@@ -45,6 +45,11 @@ class Drone(Atron):
 
     @property
     def payload(self) -> int:
+        """The current payload of this drone.
+
+        Returns:
+            int: The current payload.
+        """
         return self._payload
 
     @payload.setter
