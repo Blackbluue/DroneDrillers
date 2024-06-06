@@ -40,6 +40,7 @@ class MapData:
         self._width = 0
         self._height = 0
         self._total_coordinates = 0
+        self._landing_zone = Coordinate(0, 0)
         self._all_icons: list[list[Icon]] = []
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: list[Coordinate] = []
@@ -69,7 +70,7 @@ class MapData:
                     if char == "~":
                         self._acid.append(coord)
                     elif char == "_":
-                        self.landing_zone = coord
+                        self._landing_zone = coord
                     elif char in "0123456789":
                         destination[column] = "*"
                         self._total_minerals[coord] = int(char)
@@ -93,8 +94,8 @@ class MapData:
         """
         self._create_box(width, height)
 
-        self.landing_zone = self._get_rand_coords()
-        self._set_actual_icon(self.landing_zone, Icon.DEPLOY_ZONE)
+        self._landing_zone = self._get_rand_coords()
+        self._set_actual_icon(self._landing_zone, Icon.DEPLOY_ZONE)
 
         wall_count = ((width * 2) + (height * 2)) - 4
         total_minerals = int(density * (self._total_coordinates - wall_count))
@@ -116,7 +117,7 @@ class MapData:
         """
         mineral = self.untasked_minerals.pop()
         self.tasked_minerals.add(mineral)
-        miner.path = self.dijkstra(self.landing_zone, mineral)
+        miner.path = self.dijkstra(self._landing_zone, mineral)
 
     @overload
     def get(self, key: Tile | Coordinate, default: None) -> Tile | None:
@@ -246,11 +247,11 @@ class MapData:
             drone (Drone): The drone to add to the map.
         """
         # Check if the landing zone is available
-        if self._get_actual_icon(self.landing_zone) != Icon.DEPLOY_ZONE:
+        if self._get_actual_icon(self._landing_zone) != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
-        drone.deploy_drone(self._build_context(self.landing_zone))
-        self._set_actual_icon(self.landing_zone, drone.icon)
+        drone.deploy_drone(self._build_context(self._landing_zone))
+        self._set_actual_icon(self._landing_zone, drone.icon)
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
@@ -409,7 +410,7 @@ class MapData:
         Args:
             pos (Coordinate): The coordinates of the tile to update.
         """
-        if pos == self.landing_zone:
+        if pos == self._landing_zone:
             self._set_actual_icon(pos, Icon.DEPLOY_ZONE)
         elif pos in self._acid:
             self._set_actual_icon(pos, Icon.ACID)
