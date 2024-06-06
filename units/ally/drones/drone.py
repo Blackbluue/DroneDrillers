@@ -58,8 +58,8 @@ class Drone(Atron):
         self._payload = value
         if self._payload < 0:
             self._payload = 0
-        elif self._payload > self._MAX_HEALTH:
-            self._payload = self._MAX_HEALTH
+        elif self._payload > self.max_capacity:
+            self._payload = self.max_capacity
 
     @property
     def moves(self) -> int:

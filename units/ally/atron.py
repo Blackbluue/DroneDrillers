@@ -26,7 +26,7 @@ class Atron(ABC):
         if health <= 0:
             raise ValueError("Atron health must be 1 or greater")
         self._health = health
-        self._MAX_HEALTH = health
+        self._max_health = health
 
     @property
     def health(self) -> int:
@@ -50,8 +50,8 @@ class Atron(ABC):
         self._health = value
         if self._health < 0:
             self._health = 0
-        elif self._health > self._MAX_HEALTH:
-            self._health = self._MAX_HEALTH
+        elif self._health > self._max_health:
+            self._health = self._max_health
 
     @abstractmethod
     def action(self, context: Context) -> str:
