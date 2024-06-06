@@ -41,24 +41,6 @@ class MineralContext:
         return f"MineralContext({repr(self.loc)}, {self.amt})"
 
 
-class DroneContext:
-    """A context object for a drone."""
-
-    def __init__(self, context: Context, atron: Drone, health: int) -> None:
-        """Initialize a DroneContext object.
-
-        Args:
-            context (Context): The context of the drone.
-            atron (Drone): The drone object.
-            health (int): The health of the drone.
-        """
-        self.context: Context = context
-        self.atron: Drone = atron
-        # TODO: This should be maintained independent of whichever map they are on
-        self.health: int = health
-        self.mined_mineral = 0
-
-
 class MapData:
     """A map object, used to describe the tile layout of an area."""
 
@@ -72,7 +54,8 @@ class MapData:
 
     def __init__(self) -> None:
         """Initialize a Map object."""
-        self.d_contexts: list[DroneContext] = []
+        # TODO: overlord already tracks drones, remove here
+        self.drones: list[Drone] = []
         self._all_icons: list[list[Icon]] = []
         self._total_minerals: list[MineralContext] = []
         self._acid: list[Coordinate] = []
@@ -256,35 +239,31 @@ class MapData:
         total_minerals = sum(mineral.amt for mineral in self._total_minerals)
         return total_minerals / (self._total_coordinates - wall_count)
 
-    def remove_atron(self, atron_id: int) -> tuple[int, int] | None:
-        """Removes atron from map and returns the mineral and health.
+    def remove_atron(self, atron_id: int) -> int | None:
+        """Removes atron from map and returns the mined minerals.
 
         Args:
             atron_id (int): The id of the atron to be removed.
 
         Returns:
-            tuple[int, int] | None:
-                The mined mineral count and health of the removed drone, or None.
+            int | None: The mined mineral count, or None.
         """
-        for drone_context in self.d_contexts:
+        for drone in self.drones:
             if (
-                atron_id == id(drone_context.atron)
-                and drone_context.context.coord == self.landing_zone
+                atron_id == id(drone)
+                and drone.context.coord == self.landing_zone
             ):
-                self._set_actual_icon(
-                    drone_context.context.coord, Icon.DEPLOY_ZONE
-                )
-                self.d_contexts.remove(drone_context)
-                return drone_context.mined_mineral, drone_context.health
+                self._set_actual_icon(drone.context.coord, Icon.DEPLOY_ZONE)
+                self.drones.remove(drone)
+                return drone.payload
 
-    def add_atron(self, atron: Drone, health: int) -> bool:
+    def add_atron(self, atron: Drone) -> bool:
         """Add an atron to the map.
 
         The atron cannot be added to the map if the deploy zone is occupied.
 
         Args:
             atron (Drone): The atron to add to the map.
-            health (int): The health of the atron.
 
         Returns:
             bool: True if the atron was added, else False.
@@ -292,28 +271,27 @@ class MapData:
         # Check if the landing zone is available
         if self._get_actual_icon(self.landing_zone) != Icon.DEPLOY_ZONE:
             return False
-        self._set_actual_icon(self.landing_zone, atron.icon)
 
-        context = self._build_context(self.landing_zone)
-        drone_context = DroneContext(context, atron, health)
-        self.d_contexts.append(drone_context)
+        atron.context = self._build_context(self.landing_zone)
+        self.drones.append(atron)
+        self._set_actual_icon(self.landing_zone, atron.icon)
         return True
 
     def tick(self) -> None:
         """Update the map for the next tick."""
-        for d_context in self.d_contexts:
-            for _ in range(d_context.atron.moves):
+        for drone in self.drones:
+            for _ in range(drone.moves):
                 # acid damage is applied before movement
-                if d_context.context.coord in self._acid:
-                    d_context.health -= Icon.ACID.health_cost()
-                if d_context.health <= 0:
-                    self._clear_tile(d_context.context.coord)
-                    self.d_contexts.remove(d_context)
+                if drone.context.coord in self._acid:
+                    drone.health -= Icon.ACID.health_cost()
+                if drone.health <= 0:
+                    self._clear_tile(drone.context.coord)
+                    self.drones.remove(drone)
                     break  # atron is dead move on to next
 
-                direction = d_context.atron.action(d_context.context)
+                direction = drone.action(drone.context)
                 if direction != Directions.CENTER.value:
-                    self._move_to(d_context, direction)
+                    self._move_to(drone, direction)
 
     def _set_dimensions(self, width: int, height: int) -> None:
         """Set the dimensions of the map.
@@ -486,27 +464,27 @@ class MapData:
             if mineral_context.loc == pos:
                 return mineral_context
 
-    def _find_atron_context_at(self, pos: Coordinate) -> DroneContext | None:
-        """Find the atron context at the given coordinates.
+    def _find_atron_at(self, pos: Coordinate) -> Drone | None:
+        """Find the atron at the given coordinates.
 
         Args:
             pos (Coordinate): The coordinates to look up.
 
         Returns:
-            DroneContext | None: The atron context at the given coordinates.
+            Drone | None: The atron at the given coordinates.
         """
-        for drone_context in self.d_contexts:
-            if drone_context.context.coord == pos:
-                return drone_context
+        for drone in self.drones:
+            if drone.context.coord == pos:
+                return drone
 
-    def _move_to(self, d_context: DroneContext, dirc: str) -> None:
+    def _move_to(self, drone: Drone, dirc: str) -> None:
         """Move the drone in the given direction.
 
         Args:
-            d_context (DroneContext): The drone context to move.
+            d_context (Drone): The drone to move.
             dirc (str): The direction to move the drone.
         """
-        cur_loc = d_context.context.coord
+        cur_loc = drone.context.coord
         new_location = cur_loc.translate_one(dirc)
 
         match self._get_actual_icon(new_location):
@@ -516,16 +494,15 @@ class MapData:
                 Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY
             ):  # Drone can move here
                 self._clear_tile(cur_loc)
-                self._set_actual_icon(new_location, d_context.atron.icon)
-                d_context.context = self._build_context(new_location)
+                self._set_actual_icon(new_location, drone.icon)
+                drone.context = self._build_context(new_location)
             case Icon.WALL:  # Drone hits a wall
-                d_context.health -= Icon.WALL.health_cost()
+                drone.health -= Icon.WALL.health_cost()
             case Icon.MINERAL:  # Drone mines a mineral
                 if mineral := self._find_mineral_context_at(new_location):
                     if mineral.amt > 0:
                         mineral.amt -= 1
-                        d_context.mined_mineral += 1
-
+                        drone.payload += 1
                         if mineral.amt <= 0:
                             self._clear_tile(mineral.loc)
                             self._total_minerals.remove(mineral)

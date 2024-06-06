@@ -111,11 +111,9 @@ class MainController(tk.Tk):
             maps (MapData): The map to update.
             mined (int): The total mined minerals.
         """
-        for a_drone in mining_map.d_contexts:
+        for a_drone in mining_map.drones:
             print(
-                f"Drone ID: {id(a_drone.atron)} "
-                f"Actual Health: {a_drone.health} "
-                f"Your Health: {a_drone.atron.health}",
+                f"Drone ID: {id(a_drone)} Your Health: {a_drone.health}",
                 file=sys.stderr,
             )
         mining_map.tick()
@@ -126,14 +124,12 @@ class MainController(tk.Tk):
         self,
         mining_map: MapData,
         drone_deployed: MutableMapping[int, bool],
-        drone_healths: MutableMapping[int, int],
     ) -> int:
         """Process a tick of the game.
 
         Args:
             maps (MapData): The map to process.
             drone_locations (MutableMapping[int, bool]): The drone locations.
-            drone_healths (MutableMapping[int, int]): The drone healths.
 
         Returns:
             int: The total mined minerals.
@@ -144,16 +140,14 @@ class MainController(tk.Tk):
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
                 if drone_deployed[drone_id]:
-                    if res := mining_map.remove_atron(drone_id):
-                        extracted, health = res
+                    if extracted := mining_map.remove_atron(drone_id):
                         drone_deployed[drone_id] = False  # Not on map anymore
-                        drone_healths[drone_id] = health
                         mined += extracted
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
                 if not drone_deployed[drone_id] and mining_map.add_atron(
-                    self.overlord.drones[drone_id], drone_healths[drone_id]
+                    self.overlord.drones[drone_id]
                 ):
                     drone_deployed[drone_id] = True
             case _:  # Ignore other actions
@@ -170,19 +164,13 @@ class MainController(tk.Tk):
         mining_map = self._build_map(self.overlord)
         # Represents dictionary of drone id as key and map id as value
         drone_deployed = {drone_id: False for drone_id in self.overlord.drones}
-        drone_healths = {
-            drone_id: each_drone.health
-            for drone_id, each_drone in self.overlord.drones.items()
-        }
 
         mined = 0
         for a_tick in range(DEFAULT_TICKS):
             txt = f"Tick Counter: {a_tick}"
             self.string_var.set(txt)
             self.update_idletasks()
-            mined += self.process_tick(
-                mining_map, drone_deployed, drone_healths
-            )
+            mined += self.process_tick(mining_map, drone_deployed)
 
         print("Total mined:", mined, file=sys.stderr)
 
