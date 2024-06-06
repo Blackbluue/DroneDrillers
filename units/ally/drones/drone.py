@@ -25,6 +25,7 @@ class Drone(Atron):
         """Initialize a Drone."""
         super().__init__(self.max_health)
         self._overlord = overlord
+        self._payload = 0
         self._path_to_goal: MutableSequence[Coordinate] = []
 
     @property
@@ -35,6 +36,26 @@ class Drone(Atron):
             int: The max capacity.
         """
         return self.max_capacity
+
+    @property
+    def payload(self) -> int:
+        return self._payload
+
+    @payload.setter
+    def payload(self, value: int) -> None:
+        """Set the payload of this atron.
+
+        If set to a negative value, the payload will be set to 0. The payload
+        also cannot exceed the maximum payload, which is set at initialization.
+
+        Args:
+            value (int): The new payload value.
+        """
+        self._payload = value
+        if self._payload < 0:
+            self._payload = 0
+        elif self._payload > self._MAX_HEALTH:
+            self._payload = self._MAX_HEALTH
 
     @property
     def moves(self) -> int:
