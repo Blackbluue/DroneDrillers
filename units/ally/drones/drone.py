@@ -6,12 +6,15 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import Coordinate, Icon
+from utils import Context, Coordinate, Icon
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
     from units.ally.overlord import Overlord
+
+
+DEFAULT_CONTEXT = Context()
 
 
 class Drone(Atron):
@@ -27,6 +30,7 @@ class Drone(Atron):
         self._overlord = overlord
         self._payload = 0
         self._path_to_goal: MutableSequence[Coordinate] = []
+        self.context: Context = DEFAULT_CONTEXT
 
     @property
     def capacity(self) -> int:
