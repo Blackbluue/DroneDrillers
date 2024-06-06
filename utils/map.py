@@ -60,8 +60,8 @@ class MapData:
         Returns:
             MapData: The map object.
         """
-        with open(filename, encoding="utf-8") as fh:
-            for row, line in enumerate(fh):
+        with open(filename, encoding="utf-8") as file_handle:
+            for row, line in enumerate(file_handle):
                 self._height += 1
                 destination = list(line.rstrip())
                 cur_width = 0
