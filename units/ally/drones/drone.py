@@ -16,18 +16,20 @@ if TYPE_CHECKING:
 
 DEFAULT_CONTEXT = Context()
 
+DEFAULT_HEALTH = 40
+DEFAULT_CAPACITY = 10
+DEFAULT_MOVES = 1
+
 
 class Drone(Atron):
     """Parent class for all drone atron units."""
 
-    max_health = 40
-    max_capacity = 10
-    max_moves = 1
-
     def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
-        super().__init__(self.max_health)
+        super().__init__(DEFAULT_HEALTH)
         self._overlord = overlord
+        self._max_capacity = DEFAULT_CAPACITY
+        self._moves = DEFAULT_MOVES
         self._payload = 0
         self._path_to_goal: MutableSequence[Coordinate] = []
         self._context: Context = DEFAULT_CONTEXT
@@ -39,7 +41,7 @@ class Drone(Atron):
         Returns:
             int: The max capacity.
         """
-        return self.max_capacity
+        return self._max_capacity
 
     @property
     def payload(self) -> int:
@@ -58,8 +60,8 @@ class Drone(Atron):
         self._payload = value
         if self._payload < 0:
             self._payload = 0
-        elif self._payload > self.max_capacity:
-            self._payload = self.max_capacity
+        elif self._payload > self._max_capacity:
+            self._payload = self._max_capacity
 
     @property
     def moves(self) -> int:
@@ -68,7 +70,7 @@ class Drone(Atron):
         Returns:
             int: The drone's max moves.
         """
-        return self.max_moves
+        return self._moves
 
     @property
     def deployed(self) -> bool:
