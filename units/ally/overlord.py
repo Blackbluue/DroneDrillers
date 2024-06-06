@@ -11,6 +11,7 @@ from .atron import Atron
 from .drones import Drone
 
 if TYPE_CHECKING:
+    from collections.abc import MutableMapping
     from typing import Optional, Type
 
     from gui.dashboard import Dashboard
@@ -33,13 +34,13 @@ class Overlord(Atron):
             dashboard (Dashboard): The GUI dashboard.
         """
         self.dashboard = dashboard
-        self.drones: dict[int, Drone] = {}
+        self.drones: MutableMapping[int, Drone] = {}
         # a drone id as key and drone as value
 
-        self._deployed: dict[int, Optional[MapData]] = {}
+        self._deployed: MutableMapping[int, Optional[MapData]] = {}
         # a drone id as key and map id as value
 
-        self._idle_drones: dict[Type[Drone], set[Drone]] = {}
+        self._idle_drones: MutableMapping[Type[Drone], set[Drone]] = {}
         self._update_queue: SimpleQueue[tuple[MapData, Drone, Context]] = (
             SimpleQueue()
         )
@@ -48,7 +49,7 @@ class Overlord(Atron):
         self._pickup_queue: SimpleQueue[tuple[MapData, Drone]] = SimpleQueue()
         # a queue of pick up requests from drones
 
-        self._maps: dict[int, MapData] = {}
+        self._maps: MutableMapping[int, MapData] = {}
         # a map id as key and Map as value
 
         # scouts, miners, classes = self._create_drone_classes(refined_minerals)

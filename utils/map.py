@@ -40,8 +40,6 @@ class MapData:
         self._width = 0
         self._height = 0
         self._total_coordinates = 0
-        # TODO: overlord already tracks drones, remove here
-        self.drones: list[Drone] = []
         self._all_icons: list[list[Icon]] = []
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: list[Coordinate] = []
@@ -226,54 +224,44 @@ class MapData:
         total_minerals = sum(self._total_minerals.values())
         return total_minerals / (self._total_coordinates - wall_count)
 
-    def remove_atron(self, atron_id: int) -> int | None:
-        """Removes atron from map and returns the mined minerals.
+    def remove_drone(self, drone: Drone) -> int:
+        """Removes drone from map and returns the mined minerals.
 
         Args:
-            atron_id (int): The id of the atron to be removed.
+            drone (Drone): The drone to be removed.
 
         Returns:
-            int | None: The mined mineral count, or None.
+            int: The mined mineral count.
         """
-        for drone in self.drones:
-            if (
-                atron_id == id(drone)
-                and drone.context.coord == self.landing_zone
-            ):
-                self._set_actual_icon(drone.context.coord, Icon.DEPLOY_ZONE)
-                self.drones.remove(drone)
-                return drone.payload
+        payload = drone.undeploy_drone()
+        self._clear_tile(drone.context.coord)
+        return payload
 
-    def add_atron(self, atron: Drone) -> bool:
-        """Add an atron to the map.
+    def add_drone(self, drone: Drone) -> None:
+        """Add a drone to the map.
 
-        The atron cannot be added to the map if the deploy zone is occupied.
+        The drone cannot be added to the map if the deploy zone is occupied.
 
         Args:
-            atron (Drone): The atron to add to the map.
-
-        Returns:
-            bool: True if the atron was added, else False.
+            drone (Drone): The drone to add to the map.
         """
         # Check if the landing zone is available
         if self._get_actual_icon(self.landing_zone) != Icon.DEPLOY_ZONE:
-            return False
+            raise ValueError("Landing zone is occupied")
 
-        atron.context = self._build_context(self.landing_zone)
-        self.drones.append(atron)
-        self._set_actual_icon(self.landing_zone, atron.icon)
-        return True
+        drone.deploy_drone(self._build_context(self.landing_zone))
+        self._set_actual_icon(self.landing_zone, drone.icon)
 
-    def tick(self) -> None:
+    def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
-        for drone in self.drones:
+        for drone in drones:
             for _ in range(drone.moves):
                 # acid damage is applied before movement
                 if drone.context.coord in self._acid:
                     drone.health -= Icon.ACID.health_cost()
                 if drone.health <= 0:
                     self._clear_tile(drone.context.coord)
-                    self.drones.remove(drone)
+                    drone.undeploy_drone()  # mined minerals lost
                     break  # atron is dead move on to next
 
                 direction = drone.action(drone.context)
@@ -430,19 +418,6 @@ class MapData:
             self._set_actual_icon(pos, Icon.ACID)
         else:
             self._set_actual_icon(pos, Icon.EMPTY)
-
-    def _find_atron_at(self, pos: Coordinate) -> Drone | None:
-        """Find the atron at the given coordinates.
-
-        Args:
-            pos (Coordinate): The coordinates to look up.
-
-        Returns:
-            Drone | None: The atron at the given coordinates.
-        """
-        for drone in self.drones:
-            if drone.context.coord == pos:
-                return drone
 
     def _move_to(self, drone: Drone, dirc: str) -> None:
         """Move the drone in the given direction.

@@ -71,6 +71,15 @@ class Drone(Atron):
         return self.max_moves
 
     @property
+    def deployed(self) -> bool:
+        """Whether this drone has been deployed.
+
+        Returns:
+            bool: True if deployed, False otherwise.
+        """
+        return self._context != DEFAULT_CONTEXT
+
+    @property
     def context(self) -> Context:
         """The context surrounding this drone.
 
@@ -108,6 +117,25 @@ class Drone(Atron):
     def icon(self) -> Icon:
         """The icon of this drone type."""
         raise NotImplementedError("Drone subtypes must implement icon")
+
+    def deploy_drone(self, context: Context) -> None:
+        """Deploy the drone to the map."""
+        if self.deployed:
+            raise ValueError("Drone already deployed")
+        self._context = context
+
+    def undeploy_drone(self) -> int:
+        """Retrieve the drone from the map and extract the payload.
+
+        Returns:
+            int: The payload of this drone.
+        """
+        if not self.deployed:
+            raise ValueError("Drone not deployed")
+        self._context = DEFAULT_CONTEXT
+        payload = self._payload
+        self._payload = 0
+        return payload
 
 
 class State(Enum):
