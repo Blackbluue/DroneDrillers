@@ -24,6 +24,7 @@ class Atron(ABC):
         if health <= 0:
             raise ValueError("Atron health must be 1 or greater")
         self._health = health
+        self._MAX_HEALTH = health
 
     @property
     def health(self) -> int:
@@ -34,8 +35,24 @@ class Atron(ABC):
         """
         return self._health
 
+    @health.setter
+    def health(self, value: int) -> None:
+        """Set the health of this atron.
+
+        If set to a negative value, the health will be set to 0. The health
+        also cannot exceed the maximum health, which is set at initialization.
+
+        Args:
+            value (int): The new health value.
+        """
+        self._health = value
+        if self._health < 0:
+            self._health = 0
+        elif self._health > self._MAX_HEALTH:
+            self._health = self._MAX_HEALTH
+
     @abstractmethod
-    def action(self, context: "Context") -> str:
+    def action(self, context: Context) -> str:
         """Perform some action, based on the type of atron.
 
         Args:
