@@ -139,7 +139,7 @@ class Coordinate(NamedTuple):
             case Directions.WEST:
                 return self._replace(x=self.x - 1)  # pylint: disable=no-member
             case _:  # Directions.CENTER
-                return Coordinate(*self)
+                return Coordinate(self.x, self.y)
 
     def translate(self, x_offset: int, y_offset: int) -> Coordinate:
         """Translate this coordinate in the given direction.
