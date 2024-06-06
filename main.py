@@ -9,12 +9,12 @@ import tkinter as tk
 from random import randint, uniform
 from typing import TYPE_CHECKING
 
-from gui import Dashboard
-from units.ally import Overlord
-from utils import MapData
+from .gui import Dashboard
+from .units.ally import Overlord
+from .utils import MapData
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, MutableMapping
+    from collections.abc import MutableMapping
     from typing import Any
 
 MIN_DENSITY = 0.1
