@@ -24,23 +24,6 @@ if TYPE_CHECKING:
     from units.ally.drones import Drone
 
 
-class MineralContext:
-    """A context object for a mineral deposit."""
-
-    def __init__(self, location: Coordinate, amt: int) -> None:
-        """Initialize a MineralContext object.
-
-        Args:
-            location (Coordinate): The location of the mineral.
-            amt (int): The amount of the mineral.
-        """
-        self.loc: Coordinate = location
-        self.amt: int = amt
-
-    def __repr__(self) -> str:
-        return f"MineralContext({repr(self.loc)}, {self.amt})"
-
-
 class MapData:
     """A map object, used to describe the tile layout of an area."""
 
@@ -57,7 +40,7 @@ class MapData:
         # TODO: overlord already tracks drones, remove here
         self.drones: list[Drone] = []
         self._all_icons: list[list[Icon]] = []
-        self._total_minerals: list[MineralContext] = []
+        self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: list[Coordinate] = []
         # a set of the coords of minerals and drone id tasked to mining it
         self.untasked_minerals: MutableSet[Coordinate] = set()
@@ -85,8 +68,7 @@ class MapData:
                         self.landing_zone = coord
                     elif char in "0123456789":
                         destination[column] = "*"
-                        mineral_context = MineralContext(coord, int(char))
-                        self._total_minerals.append(mineral_context)
+                        self._total_minerals[coord] = int(char)
 
                 self._all_icons.append([Icon(char) for char in destination])
 
@@ -180,8 +162,7 @@ class MapData:
         coordinates = self._get_rand_coords()
 
         self._set_actual_icon(coordinates, Icon.MINERAL)
-        mineral_context = MineralContext(coordinates, amt)
-        self._total_minerals.append(mineral_context)
+        self._total_minerals[coordinates] = amt
 
     def dijkstra(
         self, start: Coordinate, end: Coordinate
@@ -236,7 +217,7 @@ class MapData:
             float: The ratio of total minerals to reachable tiles.
         """
         wall_count = sum(row.count(Icon.WALL) for row in self._all_icons)
-        total_minerals = sum(mineral.amt for mineral in self._total_minerals)
+        total_minerals = sum(self._total_minerals.values())
         return total_minerals / (self._total_coordinates - wall_count)
 
     def remove_atron(self, atron_id: int) -> int | None:
@@ -435,9 +416,7 @@ class MapData:
         return Context(location, *cardinals)
 
     def _clear_tile(self, pos: Coordinate) -> None:
-        """Update the tile at the given coordinates.
-
-        This function is used when an object moves off of the given tile.
+        """Clear the tile at the given coordinates.
 
         Args:
             pos (Coordinate): The coordinates of the tile to update.
@@ -448,21 +427,6 @@ class MapData:
             self._set_actual_icon(pos, Icon.ACID)
         else:
             self._set_actual_icon(pos, Icon.EMPTY)
-
-    def _find_mineral_context_at(
-        self, pos: Coordinate
-    ) -> MineralContext | None:
-        """Find the mineral context at the given coordinates.
-
-        Args:
-            pos (Coordinate): The coordinates to look up.
-
-        Returns:
-            MineralContext | None: The mineral context at the given coordinates.
-        """
-        for mineral_context in self._total_minerals:
-            if mineral_context.loc == pos:
-                return mineral_context
 
     def _find_atron_at(self, pos: Coordinate) -> Drone | None:
         """Find the atron at the given coordinates.
@@ -499,13 +463,11 @@ class MapData:
             case Icon.WALL:  # Drone hits a wall
                 drone.health -= Icon.WALL.health_cost()
             case Icon.MINERAL:  # Drone mines a mineral
-                if mineral := self._find_mineral_context_at(new_location):
-                    if mineral.amt > 0:
-                        mineral.amt -= 1
-                        drone.payload += 1
-                        if mineral.amt <= 0:
-                            self._clear_tile(mineral.loc)
-                            self._total_minerals.remove(mineral)
+                self._total_minerals[new_location] -= 1
+                drone.payload += 1
+                if self._total_minerals[new_location] <= 0:
+                    self._clear_tile(new_location)
+                    del self._total_minerals[new_location]
 
     def __getitem__(self, key: Tile | Coordinate) -> Tile:
         """Get the tile with the specified coordinates from the map.
