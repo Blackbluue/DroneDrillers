@@ -37,19 +37,6 @@ class Overlord(Atron):
         self._mining_map: MapData | None = None
         # the current mining map
 
-    def _create_drone_classes(self, minerals: int) -> tuple[int, int, dict]:
-        """Create custom drone classes based on number of minerals.
-
-        Args:
-            minerals (int): Number of allotted minerals for drone
-                creation
-
-        Returns:
-            List(Drone): List of drone classes containing a custom
-            ScoutDrone and MinerDrone
-        """
-        return (0, 0, {})
-
     def set_map(self, mining_map: MapData) -> None:
         """Register the mining map to the overlord.
 
