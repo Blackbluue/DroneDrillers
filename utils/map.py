@@ -37,6 +37,9 @@ class MapData:
 
     def __init__(self) -> None:
         """Initialize a Map object."""
+        self._width = 0
+        self._height = 0
+        self._total_coordinates = 0
         # TODO: overlord already tracks drones, remove here
         self.drones: list[Drone] = []
         self._all_icons: list[list[Icon]] = []
@@ -59,8 +62,11 @@ class MapData:
         """
         with open(filename, encoding="utf-8") as fh:
             for row, line in enumerate(fh):
+                self._height += 1
                 destination = list(line.rstrip())
+                cur_width = 0
                 for column, char in enumerate(destination):
+                    cur_width += 1
                     coord = Coordinate(column, row)
                     if char == "~":
                         self._acid.append(coord)
@@ -69,10 +75,11 @@ class MapData:
                     elif char in "0123456789":
                         destination[column] = "*"
                         self._total_minerals[coord] = int(char)
+                self._width = max(self._width, cur_width)
 
                 self._all_icons.append([Icon(char) for char in destination])
 
-        self._set_dimensions(column, row)
+        self._total_coordinates = self._width * self._height
         return self
 
     def from_scratch(self, width: int, height: int, density: float) -> MapData:
@@ -86,8 +93,7 @@ class MapData:
         Returns:
             MapData: The map object.
         """
-        self._set_dimensions(width, height)
-        self._create_box()
+        self._create_box(width, height)
 
         self.landing_zone = self._get_rand_coords()
         self._set_actual_icon(self.landing_zone, Icon.DEPLOY_ZONE)
@@ -259,7 +265,7 @@ class MapData:
         return True
 
     def tick(self) -> None:
-        """Update the map for the next tick."""
+        """Do one tick of the map."""
         for drone in self.drones:
             for _ in range(drone.moves):
                 # acid damage is applied before movement
@@ -274,8 +280,11 @@ class MapData:
                 if direction != Directions.CENTER.value:
                     self._move_to(drone, direction)
 
-    def _set_dimensions(self, width: int, height: int) -> None:
-        """Set the dimensions of the map.
+    def _create_box(self, width: int, height: int) -> None:
+        """Create a box around the map.
+
+        This function is used to create a box around the map, with walls
+        on the outer edges and empty space inside.
 
         Args:
             width (int): The width of the map.
@@ -285,12 +294,6 @@ class MapData:
         self._height = height
         self._total_coordinates = self._width * self._height
 
-    def _create_box(self) -> None:
-        """Create a box around the map.
-
-        This function is used to create a box around the map, with walls
-        on the outer edges and empty space inside.
-        """
         self._all_icons.append([Icon(char) for char in ["#"] * self._width])
         for _ in range(self._height):
             self._all_icons.append(
