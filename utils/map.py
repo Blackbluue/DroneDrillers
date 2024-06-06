@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from queue import PriorityQueue
 from random import randint
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING
 
 from .context import Context
 from .coordinate import Coordinate
@@ -31,9 +31,9 @@ _NODE_WEIGHTS = {
     None: 1,
 }
 
+
 class MapData:
     """A map object, used to describe the tile layout of an area."""
-
 
     def __init__(self) -> None:
         """Initialize a Map object."""
@@ -119,30 +119,19 @@ class MapData:
         self.tasked_minerals.add(mineral)
         miner.path = self.dijkstra(self._landing_zone, mineral)
 
-    @overload
-    def get(self, key: Tile | Coordinate, default: None) -> Tile | None:
-        pass
-
-    @overload
-    def get(self, key: Tile | Coordinate, default: Tile) -> Tile:
-        pass
-
-    def get(self, key, default):
+    def get(self, key: Coordinate, default: Tile | None) -> Tile | None:
         """Get the tile with the specified coordinates from the map.
 
-        A Tile or Coordinate object may be passed in as the key; if a Tile is
-        given, only it's coordinate attribute will be used in look up.
-
         Args:
-            key (Tile | Coordinate): The key to look up.
+            key (Coordinate): The key to look up.
             default (Tile, optional): A value to return if the
                 key is not found. Defaults to None.
 
         Returns:
-            Tile | None: The Tile within this map, or None if not found.
+            Tile | None: The Tile within this map, or the default value if not found.
         """
         try:
-            return self.__getitem__(key)
+            return self[key]
         except KeyError:
             return default
 
@@ -399,9 +388,7 @@ class MapData:
         Returns:
             Context: The context object.
         """
-        cardinals = [
-            *map(self._get_actual_icon, Coordinate(5, 5).cardinals())
-        ]
+        cardinals = [*map(self._get_actual_icon, Coordinate(5, 5).cardinals())]
         return Context(location, *cardinals)
 
     def _clear_tile(self, pos: Coordinate) -> None:
@@ -445,14 +432,11 @@ class MapData:
                     self._clear_tile(new_location)
                     del self._total_minerals[new_location]
 
-    def __getitem__(self, key: Tile | Coordinate) -> Tile:
+    def __getitem__(self, key: Coordinate) -> Tile:
         """Get the tile with the specified coordinates from the map.
 
-        A Tile or Coordinate object may be passed in as the key; if a Tile is
-        given, only it's coordinate attribute will be used in look up.
-
         Args:
-            key (Tile | Coordinate): The key to look up.
+            key (Coordinate): The key to look up.
 
         Raises:
             KeyError: If no Tile with the given coordinates exists in this map.
@@ -460,8 +444,6 @@ class MapData:
         Returns:
             Tile: The Tile within this map.
         """
-        if isinstance(key, Tile):
-            key = key.coordinate
         return self._visible_tiles_[key]
 
     def __setitem__(self, key: Coordinate, val: Icon) -> None:
