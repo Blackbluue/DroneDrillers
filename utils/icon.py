@@ -33,12 +33,13 @@ class Icon(Enum):
         Returns:
             int: A non-negative number representing the health cost, or -1.
         """
-        if self is Icon.WALL:
-            return 1
-        elif self is Icon.ACID:
-            return 3
-        else:
-            return 0
+        match self:
+            case Icon.WALL:
+                return 1
+            case Icon.ACID:
+                return 3
+            case _:
+                return 0
 
     def unicode(self) -> str:
         """Return the unicode representation of this icon.
