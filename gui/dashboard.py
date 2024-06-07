@@ -1,7 +1,4 @@
-"""This serves to define the dashboard class.
-
-Defines the attributes it has along with the methods that it uses.
-"""
+"""Display information on the drones and actions in the game."""
 
 from __future__ import annotations
 
@@ -21,12 +18,9 @@ if TYPE_CHECKING:
 
 
 class Dashboard(tkinter.Toplevel):
-    """Serves as blueprint for the dashboard class.
+    """Display information on the drones and actions in the game."""
 
-    This outlines the attributes and methods needed.
-    """
-
-    def __init__(self, parent: tkinter.Tk) -> None:
+    def __init__(self, parent: tkinter.Tk, map_data: MapData) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Arguments:
@@ -34,9 +28,11 @@ class Dashboard(tkinter.Toplevel):
         """
         super().__init__(parent)
         self.photo = tkinter.PhotoImage(file="icon.png")
-
         self.configure(bg="#2C292C")
-        self.map_dict: Dict[MapWindow, MapData] = {}
+
+        self._map_data = MapWindow(self, "Mining Map", map_data)
+        self._map_data.prepare_MapWindow()
+
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
@@ -75,32 +71,15 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def create_map_gui(self, physical_map: MapData) -> None:
-        """Create a GUI for every map that the overlord has.
-
-        Arguments:
-            physical_map (Map) : A map that will be loaded into the
-            object.
-        """
-        new_map = MapWindow(self, "Mining Map", physical_map)
-        new_map.prepare_MapWindow()
-        self.map_dict[new_map] = physical_map
-
     def update_maps(
         self, drone_positions: Iterable[Mapping[str, Any]]
     ) -> None:
-        """Update the GUI Map with what it's physical map contains.
+        """Refresh the GUI Map with what it's physical map contains.
 
         Args:
-            drone_positions (List[Tuple[int, Coordinate]]): The positions.
+            drone_positions (Iterable[Mapping[str, Any]]: The positions.
         """
-        for idx, gui_map in enumerate(self.map_dict):
-            zerg_on_map = [
-                drone_info
-                for drone_info in drone_positions
-                if drone_info["map_id"] == idx
-            ]
-            gui_map.update(zerg_on_map)
+        self._map_data.update(drone_positions)
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.
@@ -187,7 +166,7 @@ class Dashboard(tkinter.Toplevel):
         for entry in tree.get_children():
             tree.delete(entry)
 
-    def update_drone_table(self, drone_dict: Iterable["Drone"]) -> None:
+    def update_drone_table(self, drone_dict: Iterable[Drone]) -> None:
         """Clear drone table and adds a new dictionary of drones to the table.
 
         Arguments:

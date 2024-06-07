@@ -64,8 +64,7 @@ class MainController(tk.Tk):
                 uniform(MIN_DENSITY, MAX_DENSITY),
             )
 
-        self._dashboard = Dashboard(self)
-        self._dashboard.create_map_gui(self._mining_map)
+        self._dashboard = Dashboard(self, self._mining_map)
         self._overlord.set_map(self._mining_map)
 
     def _start_button_handler(self) -> None:
