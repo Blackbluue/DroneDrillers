@@ -41,13 +41,13 @@ class MapData:
         self._height = 0
         self._total_coordinates = 0
         self._landing_zone = Coordinate(0, 0)
-        self._all_icons: list[list[Icon]] = []
+        self._all_tiles: list[list[Tile]] = []
+        self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: list[Coordinate] = []
         # a set of the coords of minerals and drone id tasked to mining it
         self.untasked_minerals: MutableSet[Coordinate] = set()
         self.tasked_minerals: MutableSet[Coordinate] = set()
-        self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self.scout_count = 0
 
     def from_file(self, filename: str) -> MapData:
@@ -64,6 +64,7 @@ class MapData:
                 self._height += 1
                 destination = list(line.rstrip())
                 cur_width = 0
+                tile_row: Sequence[Tile] = []
                 for column, char in enumerate(destination):
                     cur_width += 1
                     coord = Coordinate(column, row)
@@ -74,9 +75,10 @@ class MapData:
                     elif char in "0123456789":
                         destination[column] = "*"
                         self._total_minerals[coord] = int(char)
+                    tile_row.append(Tile(coord, Icon(char)))
                 self._width = max(self._width, cur_width)
 
-                self._all_icons.append([Icon(char) for char in destination])
+                self._all_tiles.append(tile_row)
 
         self._total_coordinates = self._width * self._height
         return self
@@ -95,7 +97,7 @@ class MapData:
         self._create_box(width, height)
 
         self._landing_zone = self._get_rand_coords()
-        self._set_actual_icon(self._landing_zone, Icon.DEPLOY_ZONE)
+        self._set_actual_tile(self._landing_zone, Icon.DEPLOY_ZONE)
 
         wall_count = ((width * 2) + (height * 2)) - 4
         total_minerals = int(density * (self._total_coordinates - wall_count))
@@ -155,7 +157,7 @@ class MapData:
         """
         coordinates = self._get_rand_coords()
 
-        self._set_actual_icon(coordinates, Icon.MINERAL)
+        self._set_actual_tile(coordinates, Icon.MINERAL)
         self._total_minerals[coordinates] = amt
 
     def dijkstra(
@@ -226,11 +228,11 @@ class MapData:
             drone (Drone): The drone to add to the map.
         """
         # Check if the landing zone is available
-        if self._get_actual_icon(self._landing_zone) != Icon.DEPLOY_ZONE:
+        if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
         drone.deploy_drone(self._build_context(self._landing_zone))
-        self._set_actual_icon(self._landing_zone, drone.icon)
+        self._set_actual_tile(self._landing_zone, drone.icon)
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
@@ -262,32 +264,38 @@ class MapData:
         self._height = height
         self._total_coordinates = self._width * self._height
 
-        self._all_icons.append([Icon(char) for char in ["#"] * self._width])
-        for _ in range(self._height):
-            self._all_icons.append(
-                [Icon(char) for char in f"#{' ' * (self._width - 2)}#"]
-            )
-        self._all_icons.append([Icon(char) for char in ["#"] * self._width])
+        for row in range(self._height):
+            #  first/last columns are always a wall
+            tile_row: Sequence[Tile] = [Tile(Coordinate(0, row), Icon.WALL)]
+            for column in range(1, self._width - 1):
+                coord = Coordinate(column, row)
+                if row in [0, self._height - 1]:  # build top/bottom walls
+                    tile_row.append(Tile(coord, Icon.WALL))
+                else:  # build empty space between walls
+                    tile_row.append(Tile(coord, Icon.EMPTY))
+            tile_row.append(Tile(Coordinate(self._width - 1, row), Icon.WALL))
 
-    def _get_actual_icon(self, coord: Coordinate) -> Icon:
-        """Get the actual icon at the given coordinates.
+            self._all_tiles.append(tile_row)
+
+    def _get_actual_tile(self, coord: Coordinate) -> Tile:
+        """Get the actual tile at the given coordinates.
 
         Args:
             coord (Coordinate): The coordinates to look up.
 
         Returns:
-            Icon: The icon at the given coordinates.
+            Tile: The tile at the given coordinates.
         """
-        return self._all_icons[coord.y][coord.x]
+        return self._all_tiles[coord.y][coord.x]
 
-    def _set_actual_icon(self, coord: Coordinate, icon: Icon) -> None:
-        """Set the actual icon at the given coordinates.
+    def _set_actual_tile(self, coord: Coordinate, icon: Icon) -> None:
+        """Set the actual icon of a tile at the given coordinates.
 
         Args:
             coord (Coordinate): The coordinates to set.
             icon (Icon): The icon to set.
         """
-        self._all_icons[coord.y][coord.x] = icon
+        self._all_tiles[coord.y][coord.x].icon = icon
 
     def _get_rand_coords(self) -> Coordinate:
         """Get a random set of coordinates on the map.
@@ -298,7 +306,7 @@ class MapData:
         x_coords: int = self._width - 2
         y_coords: int = self._height - 2
         coordinates = Coordinate(0, 0)
-        while self._get_actual_icon(coordinates) != Icon.EMPTY:
+        while self._get_actual_tile(coordinates).icon != Icon.EMPTY:
             # Choose a random location on map excluding walls
             coordinates = Coordinate(
                 randint(1, x_coords),
@@ -378,7 +386,10 @@ class MapData:
         Returns:
             Context: The context object.
         """
-        cardinals = [*map(self._get_actual_icon, Coordinate(5, 5).cardinals())]
+        cardinals = [
+            *map(lambda tile: self._get_actual_tile(tile).icon,
+                 Coordinate(5, 5).cardinals())
+        ]
         return Context(location, *cardinals)
 
     def _clear_tile(self, pos: Coordinate) -> None:
@@ -388,11 +399,11 @@ class MapData:
             pos (Coordinate): The coordinates of the tile to update.
         """
         if pos == self._landing_zone:
-            self._set_actual_icon(pos, Icon.DEPLOY_ZONE)
+            self._set_actual_tile(pos, Icon.DEPLOY_ZONE)
         elif pos in self._acid:
-            self._set_actual_icon(pos, Icon.ACID)
+            self._set_actual_tile(pos, Icon.ACID)
         else:
-            self._set_actual_icon(pos, Icon.EMPTY)
+            self._set_actual_tile(pos, Icon.EMPTY)
 
     def _move_to(self, drone: Drone, dirc: str) -> None:
         """Move the drone in the given direction.
@@ -404,14 +415,14 @@ class MapData:
         cur_loc = drone.context.coord
         new_location = cur_loc.translate_one(dirc)
 
-        match self._get_actual_icon(new_location):
+        match self._get_actual_tile(new_location):
             case Icon.ATRON | Icon.MINER | Icon.SCOUT:
                 pass  # Another Drone is already there
             case (
                 Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY
             ):  # Drone can move here
                 self._clear_tile(cur_loc)
-                self._set_actual_icon(new_location, drone.icon)
+                self._set_actual_tile(new_location, drone.icon)
                 drone.context = self._build_context(new_location)
             case Icon.WALL:  # Drone hits a wall
                 drone.health -= Icon.WALL.health_cost()
@@ -463,9 +474,11 @@ class MapData:
         Returns:
             str: The string representation of this object.
         """
-        return f"Map({list(self._visible_tiles_)})"
+        return f"MapData({list(self._visible_tiles_)})"
 
     def __str__(self) -> str:
         return "\n".join(
-            "".join([char.value for char in row]) for row in self._all_icons
+            "".join(
+                [tile.icon.value for tile in row if tile.icon]
+            ) for row in self._all_tiles
         )
