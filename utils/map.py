@@ -204,16 +204,6 @@ class MapData:
             else []
         )
 
-    def summary(self) -> float:
-        """Ratio of total minerals to reachable tiles.
-
-        Returns:
-            float: The ratio of total minerals to reachable tiles.
-        """
-        wall_count = sum(row.count(Icon.WALL) for row in self._all_icons)
-        total_minerals = sum(self._total_minerals.values())
-        return total_minerals / (self._total_coordinates - wall_count)
-
     def remove_drone(self, drone: Drone) -> int:
         """Removes drone from map and returns the mined minerals.
 
