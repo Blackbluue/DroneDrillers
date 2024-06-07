@@ -23,7 +23,7 @@ class Dashboard(tkinter.Toplevel):
     def __init__(self, parent: tkinter.Tk, map_data: MapData) -> None:
         """Serve as the constructor for the Dashboard object.
 
-        Arguments:
+        Args:
             parent (tkinter.Tk): Takes in a tkinter top level window
         """
         super().__init__(parent)
@@ -44,7 +44,7 @@ class Dashboard(tkinter.Toplevel):
 
         Dashboards typically serve as spreadsheets in the gui.
         https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
-        Arguments:
+        Args:
             column_dictionary (Dict[str, int]): Contains dictionaries and
                 width values for each column.
         """
@@ -79,12 +79,12 @@ class Dashboard(tkinter.Toplevel):
         Args:
             drone_positions (Iterable[Mapping[str, Any]]: The positions.
         """
-        self._map_data.update(drone_positions)
+        self._map_data.refresh_window(drone_positions)
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.
 
-        Arguments:
+        Args:
             action (str): String that represents the action happening.
 
             tick (str): String that represents the tick in which the
@@ -137,7 +137,7 @@ class Dashboard(tkinter.Toplevel):
     def add_drone_to_tree(self, new_drone: Drone) -> None:
         """Add a drone to the drone tree in the gui.
 
-        Arguments:
+        Args:
             new_drone (Drone) : this is the drone we are adding to the tree in
                 the dashboard.
         """
@@ -160,7 +160,7 @@ class Dashboard(tkinter.Toplevel):
     def _clear_table(self, tree: ttk.Treeview) -> None:
         """Clear any of the tables in the GUI.
 
-        Arguments:
+        Args:
             tree (ttk.Treeview): This is the tree we will be clearing.
         """
         for entry in tree.get_children():
@@ -169,7 +169,7 @@ class Dashboard(tkinter.Toplevel):
     def update_drone_table(self, drone_dict: Iterable[Drone]) -> None:
         """Clear drone table and adds a new dictionary of drones to the table.
 
-        Arguments:
+        Args:
             drone_dict (dict) : This dictionary should contain all the drones
                 that will be added to the drone table.
         """

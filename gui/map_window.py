@@ -1,4 +1,4 @@
-"""Defines MapWindow class along with the methods and attributes that it uses."""
+"""A window that displays the map of the game."""
 
 from __future__ import annotations
 
@@ -8,23 +8,21 @@ from typing import TYPE_CHECKING
 from utils import Icon, Tile
 
 if TYPE_CHECKING:
+    from typing import Any
+    from collections.abc import Iterable, Mapping
     from utils import MapData
 
 
 class MapWindow(tkinter.Toplevel):
-    """Serves as the constructor for the MapWindow object.
-
-    Arguments:
-        parent (tkinter.Toplevel): Takes in a tkinter top level window
-    """
+    """A window that displays the map of the game."""
 
     def __init__(
-        self, parent: tkinter.Misc, title: str, physical_map: MapData
+        self, parent: tkinter.Toplevel, title: str, map_data: MapData
     ) -> None:
         """Initialize the GUI map.
 
         Args:
-            parent (tkinter.Misc): The parent window.
+            parent (tkinter.Toplevel): The parent window.
             title (str): The title of this window.
             physical_map (MapWindow): The actual data for the map window.
         """
@@ -34,7 +32,7 @@ class MapWindow(tkinter.Toplevel):
         self.geometry("300x300+0+0")
         self.minsize(600, 600)
         self.title(title)
-        self.physical_map = physical_map
+        self._map_data = map_data
         self.log = tkinter.Text(
             self, width=100, height=100, state="normal", wrap="none"
         )
@@ -50,15 +48,20 @@ class MapWindow(tkinter.Toplevel):
 
         self.log.config(state="disabled")
 
-    def update(self, zerg_on_map) -> None:
-        """Update MapWindow with any updated coordinates."""
-        for tile in self.physical_map._visible_tiles_.values():
+    def refresh_window(self, zerg_on_map: Iterable[Mapping[str, Any]]) -> None:
+        """Refresh MapWindow with any updated coordinates.
+
+        Args:
+            zerg_on_map (Iterable[Mapping[str, Any]]): A list of dictionaries
+                containing the coordinates and icons of zerg units.
+        """
+        for tile in self._map_data._visible_tiles_.values():
             self.translate_tile(tile)
         for drone_info in zerg_on_map:
             zerg_tile = Tile(drone_info["coord"], drone_info["icon"])
             self.translate_tile(zerg_tile)
 
-    def translate_tile(self, new_tile: "Tile") -> None:
+    def translate_tile(self, new_tile: Tile) -> None:
         """Write a tile object to the map.
 
         new_tile (Tile) : Specifies the tile that should be written into the
