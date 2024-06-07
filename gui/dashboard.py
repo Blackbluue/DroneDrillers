@@ -71,15 +71,9 @@ class Dashboard(tkinter.Toplevel):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def update_maps(
-        self, drone_positions: Iterable[Mapping[str, Any]]
-    ) -> None:
-        """Refresh the GUI Map with what it's physical map contains.
-
-        Args:
-            drone_positions (Iterable[Mapping[str, Any]]: The positions.
-        """
-        self._map_data.refresh_window(drone_positions)
+    def refresh_map(self) -> None:
+        """Refresh the GUI Map with what it's physical map contains."""
+        self._map_data.refresh_window()
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.

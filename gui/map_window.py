@@ -50,18 +50,10 @@ class MapWindow(tkinter.Toplevel):
 
         self._log.config(state="disabled")
 
-    def refresh_window(self, zerg_on_map: Iterable[Mapping[str, Any]]) -> None:
-        """Refresh MapWindow with any updated coordinates.
-
-        Args:
-            zerg_on_map (Iterable[Mapping[str, Any]]): A list of dictionaries
-                containing the coordinates and icons of zerg units.
-        """
+    def refresh_window(self) -> None:
+        """Refresh MapWindow with any updated coordinates."""
         for tile in iter(self._map_data):
             self.translate_tile(tile)
-        for drone_info in zerg_on_map:
-            zerg_tile = Tile(drone_info["coord"], drone_info["icon"])
-            self.translate_tile(zerg_tile)
 
     def translate_tile(self, new_tile: Tile) -> None:
         """Write a tile object to the map.
