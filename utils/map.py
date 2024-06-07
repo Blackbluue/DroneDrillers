@@ -447,17 +447,6 @@ class MapData:
         """
         return self._visible_tiles_[key]
 
-    def __setitem__(self, key: Coordinate, val: Icon) -> None:
-        """Set the icon for the tile at the given coordinates.
-
-        Args:
-            key (Coordinate): The coordinates of the tile.
-            val (Icon): The icon to set.
-        """
-        self._visible_tiles_[key].icon = val
-        column, row = key
-        self._all_icons[row][column] = val
-
     def __iter__(self):
         """Iterate over this map.
 
