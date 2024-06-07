@@ -29,7 +29,6 @@ class MapData:
         """Initialize a Map object."""
         self._width = 0
         self._height = 0
-        self._total_coordinates = 0
         self._landing_zone: Coordinate = DEFAULT_LANDING_ZONE
         self._all_tiles: list[list[Tile]] = []
         self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
@@ -71,7 +70,6 @@ class MapData:
 
                 self._all_tiles.append(tile_row)
 
-        self._total_coordinates = self._width * self._height
         return self
 
     def from_scratch(self, width: int, height: int, density: float) -> MapData:
@@ -91,7 +89,8 @@ class MapData:
         self._set_actual_tile(self._landing_zone, Icon.DEPLOY_ZONE)
 
         wall_count = ((width * 2) + (height * 2)) - 4
-        total_minerals = int(density * (self._total_coordinates - wall_count))
+        total_coordinates = self._width * self._height
+        total_minerals = int(density * (total_coordinates - wall_count))
         for _ in range(total_minerals):
             self.add_mineral(randint(1, 9))
 
@@ -202,7 +201,6 @@ class MapData:
         """
         self._width = width
         self._height = height
-        self._total_coordinates = self._width * self._height
 
         for row in range(self._height):
             #  first/last columns are always a wall
