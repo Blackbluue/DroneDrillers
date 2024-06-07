@@ -149,22 +149,13 @@ class Dashboard(tkinter.Toplevel):
             ),
         )
 
-    def _clear_table(self, tree: ttk.Treeview) -> None:
-        """Clear any of the tables in the GUI.
+    def update_drone_table(self, drones: Iterable[Drone]) -> None:
+        """Clear drone table and adds a new list of drones to the table.
 
         Args:
-            tree (ttk.Treeview): This is the tree we will be clearing.
+            drones (Iterable[Drone]) : The list of drones.
         """
-        for entry in tree.get_children():
-            tree.delete(entry)
-
-    def update_drone_table(self, drone_dict: Iterable[Drone]) -> None:
-        """Clear drone table and adds a new dictionary of drones to the table.
-
-        Args:
-            drone_dict (dict) : This dictionary should contain all the drones
-                that will be added to the drone table.
-        """
-        self._clear_table(self.drone_tree)
-        for entry in drone_dict:
-            self.add_drone_to_tree(entry)
+        for entry in self.drone_tree.get_children():
+            self.drone_tree.delete(entry)
+        for drone in drones:
+            self.add_drone_to_tree(drone)
