@@ -12,6 +12,7 @@ from units.ally import Overlord
 from utils import MapData
 
 from .dashboard import Dashboard
+from .label_counter import LabeledCounter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -41,15 +42,11 @@ class MainController(tk.Tk):
 
     def _initialize_values(self, refresh_delay: float) -> None:
         """Initialize game values from the GUI."""
-        self.ticks = LabeledEntry(self, "Ticks:", DEFAULT_TICKS)
-        self.refined = LabeledEntry(self, "Refined Minerals:", DEFAULT_REFINED)
-        self.refresh = LabeledEntry(
-            self, "Refresh Delay (sec):", DEFAULT_REFRESH
+        self.ticks = LabeledCounter(self, "Ticks:", DEFAULT_TICKS)
+        self.refined = LabeledCounter(
+            self, "Refined Minerals:", DEFAULT_REFINED
         )
-        self.string_var = tk.StringVar()
-        self.string_var.set("Tick Counter:")
         self._refresh_delay = refresh_delay
-        tk.Entry(self, textvariable=self.string_var, width=30).pack()
         self.start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
@@ -69,7 +66,8 @@ class MainController(tk.Tk):
 
     def _start_button_handler(self) -> None:
         """Start the game."""
-        self.start_button.destroy()
+        self.ticks.reset()
+        self.refined.reset()
         self._start_mining()
 
     def _print_drone_info(self) -> None:
@@ -131,34 +129,12 @@ class MainController(tk.Tk):
         self._print_drone_info()
 
         mined = 0
-        for a_tick in range(DEFAULT_TICKS):
-            self.string_var.set(f"Tick Counter: {a_tick}")
+        for _ in range(DEFAULT_TICKS):
+            self.ticks.value -= 1
             self.update_idletasks()
             mined += self.process_tick(self._mining_map)
 
         print("Total mined:", mined, file=sys.stderr)
-
-
-class LabeledEntry(tk.Frame):
-    """A labeled entry widget."""
-
-    def __init__(
-        self, owner: MainController, label: str, default: Any
-    ) -> None:
-        """Create a labeled entry.
-
-        Args:
-            owner (MainController): The owner of the LabeledEntry.
-            label (str): The name of the label.
-            default (Any): The default value for the label.
-        """
-        super().__init__(owner)
-        self.label = tk.Label(self, text=label, width=20)
-        self.label.pack(side=tk.LEFT)
-        self.entry = tk.Entry(self, width=5)
-        self.entry.insert(tk.END, str(default))
-        self.entry.pack(side=tk.LEFT)
-        self.pack()
 
 
 def map_tick_updates(mining_map: MapData, drones: Iterable[Drone]) -> None:
