@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from queue import PriorityQueue
 from random import randint
 from typing import TYPE_CHECKING
 
@@ -16,20 +15,10 @@ if TYPE_CHECKING:
     from collections.abc import (
         Iterable,
         MutableMapping,
-        MutableSequence,
-        MutableSet,
         Sequence,
     )
 
     from units.ally.drones import Drone
-
-_NODE_WEIGHTS = {
-    Icon.EMPTY: 1,
-    Icon.ATRON: 1,
-    Icon.DEPLOY_ZONE: 1,
-    Icon.ACID: 10,
-    None: 1,
-}
 
 DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
 
@@ -46,10 +35,6 @@ class MapData:
         self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: list[Coordinate] = []
-        # a set of the coords of minerals and drone id tasked to mining it
-        self.untasked_minerals: MutableSet[Coordinate] = set()
-        self.tasked_minerals: MutableSet[Coordinate] = set()
-        self.scout_count = 0
 
     @property
     def landing_zone(self) -> Coordinate:
@@ -113,20 +98,6 @@ class MapData:
         # TODO: add acid
         return self
 
-    def task_miner(self, miner: Drone) -> None:
-        """Task the miner with mining an available mineral.
-
-        The miner will have their path variable set, and the mineral
-        they are tasked with will be removed from the untasked_minerals
-        set.
-
-        Args:
-            miner (Drone): The miner to task.
-        """
-        mineral = self.untasked_minerals.pop()
-        self.tasked_minerals.add(mineral)
-        miner.path = self.dijkstra(self._landing_zone, mineral)
-
     def get(self, key: Coordinate, default: Tile | None) -> Tile | None:
         """Get the tile with the specified coordinates from the map.
 
@@ -165,52 +136,6 @@ class MapData:
 
         self._set_actual_tile(coordinates, Icon.MINERAL)
         self._total_minerals[coordinates] = amt
-
-    def dijkstra(
-        self, start: Coordinate, end: Coordinate
-    ) -> MutableSequence[Coordinate]:
-        """Apply Dijkstra's Algorithm to find a path between two points.
-
-        Args:
-            start (Coordinate): The start point for the search
-            end (Coordinate): The end point for the search
-        Returns:
-            list[Coordinate]: Path in the form of a Coordinate list
-        """
-        visited: set[Coordinate] = set()
-        parents_map: dict[Coordinate, Coordinate] = {}
-        path_found = False
-        pqueue: PriorityQueue[tuple[int, Coordinate]] = PriorityQueue()
-        pqueue.put((0, start))
-        while not pqueue.empty():
-            _, node = pqueue.get()
-            if node in visited:
-                continue
-            if node == end:
-                path_found = True
-                break
-
-            neighbors = node.cardinals()
-            if end in neighbors:
-                path_found = True
-                parents_map[end] = node
-                break
-
-            visited.add(node)
-            neighbors_gen = (
-                neighbor for neighbor in neighbors if neighbor not in visited
-            )
-            self._add_to_path(
-                node,
-                neighbors_gen,
-                parents_map,
-                pqueue,
-            )
-        return (
-            self._build_final_path(start, end, parents_map)
-            if path_found
-            else []
-        )
 
     def remove_drone(self, drone: Drone) -> int:
         """Removes drone from map and returns the mined minerals.
@@ -328,69 +253,6 @@ class MapData:
                 randint(1, y_coords),
             )
         return coordinates
-
-    def _add_to_path(
-        self,
-        node: Coordinate,
-        neighbors: Iterable[Coordinate],
-        parents_map: MutableMapping[Coordinate, Coordinate],
-        pqueue: PriorityQueue[tuple[int, Coordinate]],
-    ) -> None:
-        """Add neighbors to the path.
-
-        Args:
-            node (Coordinate): Starting node.
-            neighbors (Iterable[Coordinate]): Neighbors of the node.
-            parents_map (MutableMapping[Coordinate, Coordinate]): Map of path.
-            pqueue (PriorityQueue[tuple[int, Coordinate]]): Final path.
-        """
-        for neighbor_coord in neighbors:
-            if (neighbor := self.get(neighbor_coord, None)) is None:
-                # tile not in map
-                continue
-            if neighbor.icon and neighbor.icon not in _NODE_WEIGHTS:
-                # tile not pathable
-                continue
-            parents_map[neighbor.coordinate] = node
-            pqueue.put((_NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
-
-    def _build_final_path(
-        self,
-        start: Coordinate,
-        end: Coordinate,
-        parents_map: MutableMapping[Coordinate, Coordinate],
-    ) -> MutableSequence[Coordinate]:
-        """Build the final path from start to end.
-
-        Args:
-            start (Coordinate): The starting point.
-            end (Coordinate): The ending point.
-            parents_map (MutableMapping[Coordinate, Coordinate]): The path.
-
-        Returns:
-            MutableSequence[Coordinate]: The final path.
-        """
-        curr = end
-        final_path: list[Coordinate] = [end]
-        while curr != start:
-            coord = parents_map[curr]
-            final_path.append(coord)
-            curr = coord
-            if start in coord.cardinals():
-                break
-        final_path.append(start)
-        final_path = final_path[::-1]
-        return final_path
-
-    def _track_mineral(self, icon: Icon, coordinate: Coordinate) -> None:
-        """Track the mineral at the given coordinates.
-
-        Args:
-            icon (Icon): The icon of the mineral.
-            coordinate (Coordinate): The coordinates of the mineral.
-        """
-        if icon == Icon.MINERAL and coordinate not in self.tasked_minerals:
-            self.untasked_minerals.add(coordinate)
 
     def _build_context(self, location: Coordinate) -> Context:
         """Build a context object for the given location.
