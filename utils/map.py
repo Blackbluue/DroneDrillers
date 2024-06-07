@@ -31,6 +31,7 @@ _NODE_WEIGHTS = {
     None: 1,
 }
 
+DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
 
 class MapData:
     """A map object, used to describe the tile layout of an area."""
@@ -40,7 +41,7 @@ class MapData:
         self._width = 0
         self._height = 0
         self._total_coordinates = 0
-        self._landing_zone = Coordinate(0, 0)
+        self._landing_zone: Coordinate = DEFAULT_LANDING_ZONE
         self._all_tiles: list[list[Tile]] = []
         self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
@@ -49,6 +50,11 @@ class MapData:
         self.untasked_minerals: MutableSet[Coordinate] = set()
         self.tasked_minerals: MutableSet[Coordinate] = set()
         self.scout_count = 0
+
+    @property
+    def landing_zone(self) -> Coordinate:
+        """The landing zone for drones."""
+        return self._landing_zone
 
     def from_file(self, filename: str) -> MapData:
         """Read a map from a file.
