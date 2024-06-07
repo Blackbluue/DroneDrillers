@@ -58,14 +58,15 @@ class MapData:
                 for column, char in enumerate(destination):
                     cur_width += 1
                     coord = Coordinate(column, row)
-                    if char == "~":
-                        self._acid.append(coord)
-                    elif char == "_":
-                        self._landing_zone = coord
-                    elif char in "0123456789":
-                        destination[column] = "*"
-                        self._total_minerals[coord] = int(char)
-                    tile_row.append(Tile(coord, Icon(char)))
+                    icon = Icon.MINERAL if char.isdigit() else Icon(char)
+                    match icon:
+                        case Icon.ACID:
+                            self._acid.append(coord)
+                        case Icon.DEPLOY_ZONE:
+                            self._landing_zone = coord
+                        case Icon.MINERAL:
+                            self._total_minerals[coord] = int(char)
+                    tile_row.append(Tile(coord, icon))
                 self._width = max(self._width, cur_width)
 
                 self._all_tiles.append(tile_row)
