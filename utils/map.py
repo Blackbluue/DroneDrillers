@@ -219,6 +219,15 @@ class MapData:
         self._clear_tile(drone.context.coord)
         return payload
 
+    def reveal_tile(self, coord: Coordinate) -> None:
+        """Reveal a tile on the map.
+
+        Args:
+            coord (Coordinate): The coordinates of the tile to reveal.
+        """
+        tile = self._all_tiles[coord.x][coord.y]
+        self._visible_tiles_[coord] = tile
+
     def add_drone(self, drone: Drone) -> None:
         """Add a drone to the map.
 
