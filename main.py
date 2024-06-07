@@ -19,7 +19,7 @@ DEFAULT_REFRESH = 0.1  # refresh delay in seconds
 
 def main():
     """Root window that contains fields for initial values."""
-    MainController().mainloop()
+    MainController(DEFAULT_REFRESH).mainloop()
 
 
 if __name__ == "__main__":

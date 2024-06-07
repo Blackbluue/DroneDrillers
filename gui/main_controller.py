@@ -27,20 +27,19 @@ MAX_DIMENSION = 20
 
 DEFAULT_TICKS = 10
 DEFAULT_REFINED = 100
-DEFAULT_REFRESH = 0.1  # refresh delay in seconds
 
 
 class MainController(tk.Tk):
     """Main game controller."""
 
-    def __init__(self) -> None:
+    def __init__(self, refresh_delay: float) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
         self.geometry("400x150+0+0")
-        self._initialize_values()
+        self._initialize_values(refresh_delay)
 
-    def _initialize_values(self) -> None:
+    def _initialize_values(self, refresh_delay: float) -> None:
         """Initialize game values from the GUI."""
         self.ticks = LabeledEntry(self, "Ticks:", DEFAULT_TICKS)
         self.refined = LabeledEntry(self, "Refined Minerals:", DEFAULT_REFINED)
@@ -49,6 +48,7 @@ class MainController(tk.Tk):
         )
         self.string_var = tk.StringVar()
         self.string_var.set("Tick Counter:")
+        self._refresh_delay = refresh_delay
         tk.Entry(self, textvariable=self.string_var, width=30).pack()
         self.start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
@@ -123,7 +123,7 @@ class MainController(tk.Tk):
         )
         map_tick_updates(mining_map, deployed_drones)
         print("SubTotal mined:", mined, file=sys.stderr)
-        time.sleep(DEFAULT_REFRESH)
+        time.sleep(self._refresh_delay)
         return mined
 
     def _start_mining(self) -> None:
