@@ -31,7 +31,7 @@ class Dashboard(tkinter.Toplevel):
         self.configure(bg="#2C292C")
 
         self._map_data = MapWindow(self, "Mining Map", map_data)
-        self._map_data.prepare_MapWindow()
+        self._map_data.prepare_window()
 
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
