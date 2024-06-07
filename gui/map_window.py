@@ -57,7 +57,7 @@ class MapWindow(tkinter.Toplevel):
             zerg_on_map (Iterable[Mapping[str, Any]]): A list of dictionaries
                 containing the coordinates and icons of zerg units.
         """
-        for tile in self._map_data._visible_tiles_.values():
+        for tile in iter(self._map_data):
             self.translate_tile(tile)
         for drone_info in zerg_on_map:
             zerg_tile = Tile(drone_info["coord"], drone_info["icon"])

@@ -462,7 +462,7 @@ class MapData:
         Yields:
             _type_: The iterator.
         """
-        yield from self._visible_tiles_
+        yield from self._visible_tiles_.values()
 
     def __repr__(self) -> str:
         """Return a representation of this object.
