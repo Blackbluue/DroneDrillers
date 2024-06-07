@@ -93,9 +93,7 @@ class Dashboard(tkinter.Toplevel):
 
     def legend_insertion(self) -> None:
         """Prepare the legend in the dashboard."""
-        for item_counter, (key, unicode) in enumerate(
-            Icon.unicode_mappings().items(), start=2
-        ):
+        for key, unicode in Icon.unicode_mappings().items():
             self.legend_tree.insert(
                 "",
                 "end",
