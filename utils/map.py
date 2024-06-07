@@ -472,9 +472,6 @@ class MapData:
         Returns:
             str: The string representation of this object.
         """
-        return f"MapData({list(self._visible_tiles_)})"
-
-    def __str__(self) -> str:
         return "\n".join(
             "".join(
                 [tile.icon.value for tile in row if tile.icon]
