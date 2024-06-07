@@ -21,6 +21,7 @@ if TYPE_CHECKING:
     from units.ally.drones import Drone
 
 DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
+ACID_DENSITY = 0.1
 
 class MapData:
     """A map object, used to describe the tile layout of an area."""
@@ -93,9 +94,15 @@ class MapData:
         total_coordinates = self._width * self._height
         total_minerals = int(density * (total_coordinates - wall_count))
         for _ in range(total_minerals):
-            self.add_mineral(randint(1, 9))
+            self._add_mineral()
 
-        # TODO: add acid
+        total_acid = int(
+            ACID_DENSITY * (
+                total_coordinates - len(self._total_minerals) - wall_count
+            )
+        )
+        for _ in range(total_acid):
+            self._add_acid()
         return self
 
     def get(self, key: Coordinate, default: Tile | None) -> Tile | None:
@@ -125,17 +132,6 @@ class MapData:
             for tile in self._visible_tiles_.values()
             if not tile.discovered
         ]
-
-    def add_mineral(self, amt: int) -> None:
-        """Adds a single mineral deposit to a random open spot in the map.
-
-        Args:
-            amt (int): The size of the mineral deposit.
-        """
-        coordinates = self._get_rand_coords()
-
-        self._set_actual_tile(coordinates, Icon.MINERAL)
-        self._total_minerals[coordinates] = amt
 
     def remove_drone(self, drone: Drone) -> int:
         """Removes drone from map and returns the mined minerals.
@@ -215,6 +211,20 @@ class MapData:
             tile_row.append(Tile(Coordinate(self._width - 1, row), Icon.WALL))
 
             self._all_tiles.append(tile_row)
+
+    def _add_mineral(self) -> None:
+        """Adds a single mineral deposit to a random open spot in the map."""
+        coordinates = self._get_rand_coords()
+
+        self._set_actual_tile(coordinates, Icon.MINERAL)
+        self._total_minerals[coordinates] = randint(1, 9)
+
+    def _add_acid(self) -> None:
+        """Adds a single acid tile to a random open spot in the map."""
+        coordinates = self._get_rand_coords()
+
+        self._set_actual_tile(coordinates, Icon.ACID)
+        self._acid.append(coordinates)
 
     def _get_actual_tile(self, coord: Coordinate) -> Tile:
         """Get the actual tile at the given coordinates.
