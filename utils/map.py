@@ -12,16 +12,13 @@ from .icon import Icon
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from collections.abc import (
-        Iterable,
-        MutableMapping,
-        Sequence,
-    )
+    from collections.abc import Iterable, MutableMapping, Sequence
 
     from units.ally.drones import Drone
 
 DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
 ACID_DENSITY = 0.1
+
 
 class MapData:
     """A map object, used to describe the tile layout of an area."""
@@ -97,9 +94,8 @@ class MapData:
             self._add_mineral()
 
         total_acid = int(
-            ACID_DENSITY * (
-                total_coordinates - len(self._total_minerals) - wall_count
-            )
+            ACID_DENSITY
+            * (total_coordinates - len(self._total_minerals) - wall_count)
         )
         for _ in range(total_acid):
             self._add_acid()
@@ -176,8 +172,8 @@ class MapData:
             for _ in range(drone.moves):
                 # acid damage is applied before movement
                 if drone.context.coord in self._acid:
-                    drone.health -= Icon.ACID.health_cost()
-                if drone.health <= 0:
+                    drone.health.count(-Icon.ACID.health_cost())
+                if drone.health.get() <= 0:
                     self._clear_tile(drone.context.coord)
                     drone.undeploy_drone()  # mined minerals lost
                     break  # atron is dead move on to next
@@ -273,8 +269,10 @@ class MapData:
             Context: The context object.
         """
         cardinals = [
-            *map(lambda tile: self._get_actual_tile(tile).icon,
-                 Coordinate(5, 5).cardinals())
+            *map(
+                lambda tile: self._get_actual_tile(tile).icon,
+                Coordinate(5, 5).cardinals(),
+            )
         ]
         return Context(location, *cardinals)
 
@@ -311,7 +309,7 @@ class MapData:
                 self._set_actual_tile(new_location, drone.icon)
                 drone.context = self._build_context(new_location)
             case Icon.WALL:  # Drone hits a wall
-                drone.health -= Icon.WALL.health_cost()
+                drone.health.count(-Icon.WALL.health_cost())
             case Icon.MINERAL:  # Drone mines a mineral
                 self._total_minerals[new_location] -= 1
                 drone.payload += 1
@@ -350,7 +348,6 @@ class MapData:
             str: The string representation of this object.
         """
         return "\n".join(
-            "".join(
-                [tile.icon.value for tile in row if tile.icon]
-            ) for row in self._all_tiles
+            "".join([tile.icon.value for tile in row if tile.icon])
+            for row in self._all_tiles
         )
