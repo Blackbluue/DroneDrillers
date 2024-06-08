@@ -6,14 +6,6 @@ import sys
 
 from gui.main_controller import MainController
 
-MIN_DENSITY = 0.1
-MAX_DENSITY = 0.5
-
-MIN_DIMENSION = 10
-MAX_DIMENSION = 20
-
-DEFAULT_TICKS = 10
-DEFAULT_REFINED = 100
 DEFAULT_REFRESH = 0.1  # refresh delay in seconds
 
 
