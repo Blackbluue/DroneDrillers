@@ -29,7 +29,10 @@ class Counter(tk.IntVar):
                 "Max value must be greater than or equal to value."
             )
         self._start = value
+        # The default value for the counter.
+
         self._max_value = max_value
+        # The maximum value the counter can be set to.
 
     def set(self, value: int) -> None:
         if value < 0:
@@ -38,13 +41,13 @@ class Counter(tk.IntVar):
             value = self._max_value
         return super().set(value)
 
-    def count_up(self) -> None:
-        """Increment the counter by 1."""
-        super().set(self.get() + 1)
+    def count(self, value: int) -> None:
+        """Add the given value to the counter.
 
-    def count_down(self) -> None:
-        """Decrement the counter by 1."""
-        super().set(self.get() - 1)
+        Args:
+            value (int): The value to add to the counter.
+        """
+        super().set(self.get() + value)
 
     def reset(self) -> None:
         """Reset the counter to its default value."""

@@ -134,7 +134,7 @@ class MainController(tk.Tk):
 
         mined = 0
         for _ in range(DEFAULT_TICKS):
-            self.ticks.counter.count_down()
+            self.ticks.counter.count(-1)
             self.update_idletasks()
             mined += self.process_tick(self._mining_map)
 
