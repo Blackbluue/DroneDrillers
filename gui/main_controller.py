@@ -16,7 +16,6 @@ from .label_counter import LabeledCounter
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
-    from typing import Any
 
     from units.ally.drones import Drone
 
