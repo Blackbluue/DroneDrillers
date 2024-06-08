@@ -1,3 +1,5 @@
+"""A labeled counter widget."""
+
 from __future__ import annotations
 
 import tkinter as tk
@@ -8,7 +10,7 @@ if TYPE_CHECKING:
 
 
 class LabeledCounter(tk.Frame):
-    """A labeled entry widget to count resources."""
+    """A labeled counter widget."""
 
     def __init__(
         self, owner: MainController, label: str, default: int
