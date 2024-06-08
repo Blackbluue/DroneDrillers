@@ -90,7 +90,7 @@ class Drone(Atron):
     @path.setter
     def path(self, new_path: MutableSequence[Coordinate]) -> None:
         self._path_to_goal = new_path
-        self._path_traveled = []
+        self._path_traveled: MutableSequence[Coordinate] = []
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 

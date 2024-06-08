@@ -12,7 +12,13 @@ from .icon import Icon
 from .tile import Tile
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, MutableMapping, Sequence
+    from collections.abc import (
+        Iterable,
+        Iterator,
+        MutableMapping,
+        MutableSequence,
+        Sequence,
+    )
 
     from units.ally.drones import Drone
 
@@ -28,10 +34,10 @@ class MapData:
         self._width = 0
         self._height = 0
         self._landing_zone: Coordinate = DEFAULT_LANDING_ZONE
-        self._all_tiles: list[list[Tile]] = []
+        self._all_tiles: list[MutableSequence[Tile]] = []
         self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
-        self._acid: list[Coordinate] = []
+        self._acid: MutableSequence[Coordinate] = []
 
     @property
     def landing_zone(self) -> Coordinate:
@@ -52,7 +58,7 @@ class MapData:
                 self._height += 1
                 destination = list(line.rstrip())
                 cur_width = 0
-                tile_row: Sequence[Tile] = []
+                tile_row: MutableSequence[Tile] = []
                 for column, char in enumerate(destination):
                     cur_width += 1
                     coord = Coordinate(column, row)
@@ -197,7 +203,7 @@ class MapData:
 
         for row in range(self._height):
             #  first/last columns are always a wall
-            tile_row: Sequence[Tile] = [Tile(Coordinate(0, row), Icon.WALL)]
+            tile_row = [Tile(Coordinate(0, row), Icon.WALL)]
             for column in range(1, self._width - 1):
                 coord = Coordinate(column, row)
                 if row in [0, self._height - 1]:  # build top/bottom walls
@@ -331,11 +337,11 @@ class MapData:
         """
         return self._visible_tiles_[key]
 
-    def __iter__(self):
-        """Iterate over this map.
+    def __iter__(self) -> Iterator[Tile]:
+        """Iterate over the visible tiles in this map.
 
         Yields:
-            _type_: The iterator.
+            Iterator[Tile]: The visible tiles in this map.
         """
         yield from self._visible_tiles_.values()
 
