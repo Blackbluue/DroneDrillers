@@ -2,6 +2,7 @@
 
 from .context import Context
 from .coordinate import Coordinate
+from .counter import Counter
 from .directions import Directions
 from .icon import Icon
 from .map import MapData
