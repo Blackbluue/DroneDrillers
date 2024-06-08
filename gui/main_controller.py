@@ -41,9 +41,14 @@ class MainController(tk.Tk):
 
     def _initialize_values(self, refresh_delay: float) -> None:
         """Initialize game values from the GUI."""
-        self.ticks = LabeledCounter(self, "Ticks:", DEFAULT_TICKS)
+        self.ticks = LabeledCounter(
+            self, "Ticks:", value=DEFAULT_TICKS, max_value=DEFAULT_TICKS
+        )
         self.refined = LabeledCounter(
-            self, "Refined Minerals:", DEFAULT_REFINED
+            self,
+            "Refined Minerals:",
+            value=DEFAULT_REFINED,
+            max_value=DEFAULT_REFINED,
         )
         self._refresh_delay = refresh_delay
         self.start_button = tk.Button(
@@ -65,8 +70,8 @@ class MainController(tk.Tk):
 
     def _start_button_handler(self) -> None:
         """Start the game."""
-        self.ticks.reset()
-        self.refined.reset()
+        self.ticks.counter.reset()
+        self.refined.counter.reset()
         self._start_mining()
 
     def _print_drone_info(self) -> None:
@@ -129,7 +134,7 @@ class MainController(tk.Tk):
 
         mined = 0
         for _ in range(DEFAULT_TICKS):
-            self.ticks.value -= 1
+            self.ticks.counter.count_down()
             self.update_idletasks()
             mined += self.process_tick(self._mining_map)
 
