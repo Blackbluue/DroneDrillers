@@ -6,18 +6,12 @@ import sys
 import time
 import tkinter as tk
 from random import randint, uniform
-from typing import TYPE_CHECKING
 
 from units.ally import Overlord
 from utils import MapData
 
 from .dashboard import Dashboard
 from .label_counter import LabeledCounter
-
-if TYPE_CHECKING:
-    from collections.abc import Iterable
-
-    from units.ally.drones import Drone
 
 MIN_DENSITY = 0.1
 MAX_DENSITY = 0.5
@@ -123,8 +117,9 @@ class MainController(tk.Tk):
                 lambda drone: drone.deployed, self._overlord.drones.values()
             )
         )
-        map_tick_updates(mining_map, deployed_drones)
-        print("SubTotal mined:", mined, file=sys.stderr)
+        mining_map.tick(deployed_drones)
+        print(mining_map, file=sys.stderr)
+        print(f"SubTotal mined: {mined}", file=sys.stderr)
         time.sleep(self._refresh_delay)
         return mined
 
@@ -139,18 +134,3 @@ class MainController(tk.Tk):
             mined += self.process_tick(self._mining_map)
 
         print("Total mined:", mined, file=sys.stderr)
-
-
-def map_tick_updates(mining_map: MapData, drones: Iterable[Drone]) -> None:
-    """Process map tick and print out the status.
-
-    Args:
-        maps (MapData): The map to update.
-    """
-    for a_drone in drones:
-        print(
-            f"Drone ID: {id(a_drone)} Your Health: {a_drone.health}",
-            file=sys.stderr,
-        )
-    mining_map.tick(drones)
-    print(mining_map, file=sys.stderr)
