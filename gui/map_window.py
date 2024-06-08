@@ -9,12 +9,11 @@ from typing import TYPE_CHECKING
 from utils import Icon, Tile
 
 if TYPE_CHECKING:
-    from typing import Any
-    from collections.abc import Iterable, Mapping
     from utils import MapData
 
 
 MAX_SIZE = 76
+
 
 class MapWindow(tkinter.Toplevel):
     """A window that displays the map of the game."""
@@ -44,7 +43,9 @@ class MapWindow(tkinter.Toplevel):
     def prepare_window(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self._log.config(state="normal")
-        for x_axis, y_axis in itertools.product(range(1, MAX_SIZE), range(1, MAX_SIZE)):
+        for x_axis, y_axis in itertools.product(
+            range(1, MAX_SIZE), range(1, MAX_SIZE)
+        ):
             self._log.insert(f"{x_axis}.{y_axis}", Icon.UNKNOWN.unicode())
             self._log.insert(tkinter.END, "\n")
 
