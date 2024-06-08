@@ -6,7 +6,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import Context, Coordinate, Icon
+from utils import Context, Coordinate, Counter, Icon
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
@@ -28,45 +28,19 @@ class Drone(Atron):
         """Initialize a Drone."""
         super().__init__(DEFAULT_HEALTH)
         self._overlord = overlord
-        self._max_capacity = DEFAULT_CAPACITY
         self._moves = DEFAULT_MOVES
-        self._payload = 0
+        self._payload = Counter(value=0, max_value=DEFAULT_CAPACITY)
         self._path_to_goal: MutableSequence[Coordinate] = []
         self._context: Context = DEFAULT_CONTEXT
 
     @property
-    def capacity(self) -> int:
-        """The max mineral capacity for this drone.
+    def payload(self) -> Counter:
+        """The drone's mineral payload.
 
         Returns:
-            int: The max capacity.
-        """
-        return self._max_capacity
-
-    @property
-    def payload(self) -> int:
-        """The current payload of this drone.
-
-        Returns:
-            int: The current payload.
+            Counter: The mineral payload.
         """
         return self._payload
-
-    @payload.setter
-    def payload(self, value: int) -> None:
-        """Set the payload of this atron.
-
-        If set to a negative value, the payload will be set to 0. The payload
-        also cannot exceed the maximum payload, which is set at initialization.
-
-        Args:
-            value (int): The new payload value.
-        """
-        self._payload = value
-        if self._payload < 0:
-            self._payload = 0
-        elif self._payload > self._max_capacity:
-            self._payload = self._max_capacity
 
     @property
     def moves(self) -> int:
@@ -140,8 +114,8 @@ class Drone(Atron):
         if not self.deployed:
             raise ValueError("Drone not deployed")
         self._context = DEFAULT_CONTEXT
-        payload = self._payload
-        self._payload = 0
+        payload = self._payload.get()
+        self._payload.reset()
         return payload
 
 

@@ -312,7 +312,7 @@ class MapData:
                 drone.health.count(-Icon.WALL.health_cost())
             case Icon.MINERAL:  # Drone mines a mineral
                 self._total_minerals[new_location] -= 1
-                drone.payload += 1
+                drone.payload.count(1)
                 if self._total_minerals[new_location] <= 0:
                     self._clear_tile(new_location)
                     del self._total_minerals[new_location]

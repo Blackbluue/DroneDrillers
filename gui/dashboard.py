@@ -144,7 +144,7 @@ class Dashboard(tkinter.Toplevel):
                 type_of_drone,
                 status_of_drone,
                 new_drone.health,
-                new_drone.capacity,
+                new_drone.payload.get(),
                 new_drone.moves,
             ),
         )
