@@ -2,23 +2,21 @@
 
 from __future__ import annotations
 
-from queue import SimpleQueue, PriorityQueue
+from queue import PriorityQueue, SimpleQueue
 from typing import TYPE_CHECKING
 
-from utils import Context, MapData, Icon
+from utils import Context, Icon, MapData
 
 from .atron import Atron
 from .drones import Drone
 
 if TYPE_CHECKING:
     from collections.abc import (
-        MutableMapping,
-        MutableSet,
-        MutableSequence,
         Iterable,
+        MutableMapping,
+        MutableSequence,
+        MutableSet,
     )
-
-    from typing import Type
 
     from utils import Coordinate
 
@@ -32,6 +30,7 @@ _NODE_WEIGHTS = {
     None: 1,
 }
 
+
 class Overlord(Atron):
     """Overlord, who oversees atron drones and assigns tasks to them."""
 
@@ -41,7 +40,7 @@ class Overlord(Atron):
         self.drones: MutableMapping[int, Drone] = {}
         # a drone id as key and drone as value
 
-        self._idle_drones: MutableMapping[Type[Drone], set[Drone]] = {}
+        self._idle_drones: MutableMapping[type[Drone], MutableSet[Drone]] = {}
         self._update_queue: SimpleQueue[tuple[MapData, Drone, Context]] = (
             SimpleQueue()
         )
@@ -56,7 +55,6 @@ class Overlord(Atron):
         # a set of the coords of untasked minerals
         self._tasked_minerals: MutableSet[Coordinate] = set()
         # a set of the coords of tasked minerals
-
 
     def set_map(self, mining_map: MapData) -> None:
         """Register the mining map to the overlord.
@@ -77,7 +75,7 @@ class Overlord(Atron):
         Returns:
             str: The action for the overlord to perform
         """
-        return "NONE"
+        return ""
 
     def _task_miner(self, miner: Drone) -> None:
         """Task the miner with mining an available mineral.
@@ -171,7 +169,9 @@ class Overlord(Atron):
             raise ValueError("Overlord not on map")
 
         for neighbor_coord in neighbors:
-            if (neighbor := self._mining_map.get(neighbor_coord, None)) is None:
+            if (
+                neighbor := self._mining_map.get(neighbor_coord, None)
+            ) is None:
                 # tile not in map
                 continue
             if neighbor.icon and neighbor.icon not in _NODE_WEIGHTS:

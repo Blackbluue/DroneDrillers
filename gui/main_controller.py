@@ -109,6 +109,8 @@ class MainController(tk.Tk):
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
                 mining_map.add_drone(self._overlord.drones[drone_id])
+            case "":
+                pass  # Do nothing
             case _:  # Ignore other actions
                 print(f"Unknown action: {action}", file=sys.stderr)
 
