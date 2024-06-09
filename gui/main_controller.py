@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+import random
 import sys
 import time
 import tkinter as tk
@@ -19,15 +21,15 @@ DEFAULT_REFINED = 100
 class MainController(tk.Tk):
     """Main game controller."""
 
-    def __init__(self, refresh_delay: float, map_file: str | None) -> None:
+    def __init__(self, refresh_delay: float, map_dir: str | None) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
         self.geometry("400x150+0+0")
-        self._initialize_values(refresh_delay, map_file)
+        self._initialize_values(refresh_delay, map_dir)
 
     def _initialize_values(
-        self, refresh_delay: float, map_file: str | None
+        self, refresh_delay: float, map_dir: str | None
     ) -> None:
         """Initialize game values from the GUI."""
         self.ticks = LabeledCounter(
@@ -47,6 +49,13 @@ class MainController(tk.Tk):
 
         self._game_data = GameData()
         self._dashboard = Dashboard(self)
+        self._map_dir = map_dir
+
+        if self._map_dir:
+            random_file = random.choice(os.listdir(self._map_dir))
+            map_file = os.path.join(self._map_dir, random_file)
+        else:
+            map_file = None
         mining_map = MapData(map_file)
         self._game_data.current_map = mining_map
         self._dashboard.set_map(mining_map, self._game_data.player)

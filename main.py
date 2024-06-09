@@ -3,6 +3,7 @@
 
 
 import argparse
+import os.path
 import sys
 
 from gui.main_controller import MainController
@@ -14,11 +15,11 @@ def get_args() -> argparse.Namespace:
     # command line arguments are for testing. eventually will move these
     # to a configuration file
     parser.add_argument(
-        "map_file",
-        metavar="map_file",
+        "map_directory",
+        metavar="map_directory",
         type=str,
         nargs="?",
-        help="Map file to load",
+        help="Directory to find map files",
     )
     parser.add_argument(
         "-r",
@@ -27,15 +28,18 @@ def get_args() -> argparse.Namespace:
         default=0.1,
         help="Refresh delay in seconds (default: %(default)s)",
     )
-    return parser.parse_args()
+    args = parser.parse_args()
+    if args.map_directory and not os.path.isdir(args.map_directory):
+        parser.error(f"Map directory {args.map_directory} does not exist")
+    return args
 
 
 def main() -> None:
     """Collect settings from the command line and start the game."""
     args = get_args()
-    map_file: str | None = args.map_file
-    print(f"Starting game with map file: {map_file}")
-    MainController(args.refresh, map_file).mainloop()
+    map_directory: str | None = args.map_directory
+    print(f"Starting game with map directory: {map_directory}")
+    MainController(args.refresh, map_directory).mainloop()
 
 
 if __name__ == "__main__":
