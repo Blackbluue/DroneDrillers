@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tkinter import Event
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
@@ -33,3 +34,5 @@ class Player(Atron):
         map_window.bind("<Up>", self.move_player, add=True)
         map_window.bind("<Down>", self.move_player, add=True)
 
+    def move_player(self, event: Event) -> None:
+        print(f"clicked {event.keysym}")
