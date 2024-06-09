@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import DEFAULT_CONTEXT, Context
+from utils import DEFAULT_CONTEXT, Context, Icon
 
 if TYPE_CHECKING:
     from tkinter import Event
@@ -13,19 +13,24 @@ if TYPE_CHECKING:
     from gui.map_window import MapWindow
 
 DEFAULT_HEALTH = 100
+DEFAULT_CAPACITY = 50
 
 
 class Player(Atron):
     """Player unit class."""
 
     def __init__(self) -> None:
-        super().__init__(DEFAULT_HEALTH)
+        super().__init__(DEFAULT_HEALTH, DEFAULT_CAPACITY)
         self._map_window: MapWindow | None = None
         self._l_bind: str | None = None
         self._r_bind: str | None = None
         self._u_bind: str | None = None
         self._d_bind: str | None = None
-        self._context: Context = DEFAULT_CONTEXT
+
+    @property
+    def icon(self) -> Icon:
+        """The icon of the player."""
+        return Icon.PLAYER
 
     def deploy_player(self, map_window: MapWindow) -> None:
         """Deploy the player on the map.

@@ -7,7 +7,7 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import DEFAULT_CONTEXT, Context, Coordinate, Counter, Icon
+from utils import DEFAULT_CONTEXT, Context, Coordinate
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
@@ -25,21 +25,10 @@ class Drone(Atron, ABC):
 
     def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
-        super().__init__(DEFAULT_HEALTH)
+        super().__init__(DEFAULT_HEALTH, DEFAULT_CAPACITY)
         self._overlord = overlord
         self._moves = DEFAULT_MOVES
-        self._payload = Counter(value=0, max_value=DEFAULT_CAPACITY)
         self._path_to_goal: MutableSequence[Coordinate] = []
-        self._context: Context = DEFAULT_CONTEXT
-
-    @property
-    def payload(self) -> Counter:
-        """The drone's mineral payload.
-
-        Returns:
-            Counter: The mineral payload.
-        """
-        return self._payload
 
     @property
     def moves(self) -> int:
@@ -60,24 +49,6 @@ class Drone(Atron, ABC):
         return self._context != DEFAULT_CONTEXT
 
     @property
-    def context(self) -> Context:
-        """The context surrounding this drone.
-
-        Returns:
-            Context: The context.
-        """
-        return self._context
-
-    @context.setter
-    def context(self, new_context: Context) -> None:
-        """Set the context surrounding this drone.
-
-        Args:
-            new_context (Context): The new context.
-        """
-        self._context = new_context
-
-    @property
     def path(self) -> MutableSequence[Coordinate]:
         """The path this drone will take to its destination.
 
@@ -92,11 +63,6 @@ class Drone(Atron, ABC):
         self._path_traveled: MutableSequence[Coordinate] = []
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
-
-    @property
-    def icon(self) -> Icon:
-        """The icon of this drone type."""
-        raise NotImplementedError("Drone subtypes must implement icon")
 
     @abstractmethod
     def action(self, context: Context) -> str:

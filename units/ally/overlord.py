@@ -56,6 +56,11 @@ class Overlord(Atron):
         self._tasked_minerals: MutableSet[Coordinate] = set()
         # a set of the coords of tasked minerals
 
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        return Icon.DEPLOY_ZONE
+
     def set_map(self, mining_map: MapData | None) -> None:
         """Register the mining map to the overlord.
 
