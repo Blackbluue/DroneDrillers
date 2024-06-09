@@ -106,7 +106,7 @@ class MainController(tk.Tk):
             raise ValueError("No mining map")
 
         total_mined = 0
-        for _ in range(DEFAULT_TICKS):
+        for _ in range(self.ticks.counter.get()):
             self.ticks.counter.count(-1)
             self.update_idletasks()
             total_mined += self._process_tick(mining_map)
