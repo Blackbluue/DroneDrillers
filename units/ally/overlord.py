@@ -65,7 +65,6 @@ class Overlord(Atron):
         self._mining_map = mining_map
 
     def action(self, context=None) -> str:
-        # sourcery skip: assign-if-exp, reintroduce-else
         """Perform some action, based on the context of the situation.
 
         Args:
