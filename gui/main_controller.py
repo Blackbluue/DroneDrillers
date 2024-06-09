@@ -26,14 +26,16 @@ DEFAULT_REFINED = 100
 class MainController(tk.Tk):
     """Main game controller."""
 
-    def __init__(self, refresh_delay: float) -> None:
+    def __init__(self, refresh_delay: float, map_file: str | None) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
         self.geometry("400x150+0+0")
-        self._initialize_values(refresh_delay)
+        self._initialize_values(refresh_delay, map_file)
 
-    def _initialize_values(self, refresh_delay: float) -> None:
+    def _initialize_values(
+        self, refresh_delay: float, map_file: str | None
+    ) -> None:
         """Initialize game values from the GUI."""
         self.ticks = LabeledCounter(
             self, "Ticks:", value=DEFAULT_TICKS, max_value=DEFAULT_TICKS
@@ -50,8 +52,8 @@ class MainController(tk.Tk):
         )
         self.start_button.pack()
         self._overlord = Overlord()
-        if sys.argv[1:]:  # Overwrite from file if indicated
-            self._mining_map = MapData().from_file(sys.argv.pop(1))
+        if map_file:
+            self._mining_map = MapData().from_file(map_file)
         else:
             self._mining_map = MapData().from_scratch(
                 randint(MIN_DIMENSION, MAX_DIMENSION),

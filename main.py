@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Main controller for the Atron Mining Expedition."""
+"""Starting point for the game."""
 
 
 import sys
@@ -10,8 +10,9 @@ DEFAULT_REFRESH = 0.1  # refresh delay in seconds
 
 
 def main():
-    """Root window that contains fields for initial values."""
-    MainController(DEFAULT_REFRESH).mainloop()
+    """Collect settings from the command line and start the game."""
+    map_file = sys.argv.pop(1) if sys.argv[1:] else None
+    MainController(DEFAULT_REFRESH, map_file).mainloop()
 
 
 if __name__ == "__main__":
