@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from random import randint
+from random import randint, uniform
 from typing import TYPE_CHECKING
 
 from .context import Context
@@ -23,13 +23,20 @@ if TYPE_CHECKING:
     from units.ally.drones import Drone
 
 DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
+
+MIN_DIMENSION = 10
+MAX_DIMENSION = 20
+
+MIN_DENSITY = 0.1
+MAX_DENSITY = 0.5
+
 ACID_DENSITY = 0.1
 
 
 class MapData:
     """A map object, used to describe the tile layout of an area."""
 
-    def __init__(self) -> None:
+    def __init__(self, map_file: str | None) -> None:
         """Initialize a Map object."""
         self._width = 0
         self._height = 0
@@ -38,13 +45,21 @@ class MapData:
         self._visible_tiles: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: MutableSequence[Coordinate] = []
+        if map_file:
+            self._with_file(map_file)
+        else:
+            self._no_file(
+                randint(MIN_DIMENSION, MAX_DIMENSION),
+                randint(MIN_DIMENSION, MAX_DIMENSION),
+                uniform(MIN_DENSITY, MAX_DENSITY),
+            )
 
     @property
     def landing_zone(self) -> Coordinate:
         """The landing zone for drones."""
         return self._landing_zone
 
-    def from_file(self, filename: str) -> MapData:
+    def _with_file(self, filename: str) -> MapData:
         """Read a map from a file.
 
         Args:
@@ -77,7 +92,7 @@ class MapData:
 
         return self
 
-    def from_scratch(self, width: int, height: int, density: float) -> MapData:
+    def _no_file(self, width: int, height: int, density: float) -> MapData:
         """Create a map from scratch.
 
         Args:

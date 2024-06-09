@@ -5,19 +5,12 @@ from __future__ import annotations
 import sys
 import time
 import tkinter as tk
-from random import randint, uniform
 
 from units.ally import Overlord
 from utils import MapData
 
 from .dashboard import Dashboard
 from .label_counter import LabeledCounter
-
-MIN_DENSITY = 0.1
-MAX_DENSITY = 0.5
-
-MIN_DIMENSION = 10
-MAX_DIMENSION = 20
 
 DEFAULT_TICKS = 10
 DEFAULT_REFINED = 100
@@ -51,17 +44,10 @@ class MainController(tk.Tk):
             self, command=self._start_button_handler, text="Start"
         )
         self.start_button.pack()
-        self._overlord = Overlord()
-        if map_file:
-            self._mining_map = MapData().from_file(map_file)
-        else:
-            self._mining_map = MapData().from_scratch(
-                randint(MIN_DIMENSION, MAX_DIMENSION),
-                randint(MIN_DIMENSION, MAX_DIMENSION),
-                uniform(MIN_DENSITY, MAX_DENSITY),
-            )
 
+        self._mining_map = MapData(map_file)
         self._dashboard = Dashboard(self, self._mining_map)
+        self._overlord = Overlord()
         self._overlord.set_map(self._mining_map)
 
     def _start_button_handler(self) -> None:
