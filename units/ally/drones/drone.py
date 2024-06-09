@@ -7,15 +7,13 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import Context, Coordinate, Counter, Icon
+from utils import DEFAULT_CONTEXT, Context, Coordinate, Counter, Icon
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
     from units.ally.overlord import Overlord
 
-
-DEFAULT_CONTEXT = Context()
 
 DEFAULT_HEALTH = 40
 DEFAULT_CAPACITY = 10
