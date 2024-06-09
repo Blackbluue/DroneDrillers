@@ -292,7 +292,7 @@ class MapData:
         cardinals = [
             *map(
                 lambda tile: self._get_actual_tile(tile).icon,
-                Coordinate(5, 5).cardinals(),
+                location.cardinals(),
             )
         ]
         return Context(location, *cardinals)
