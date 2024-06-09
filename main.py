@@ -2,17 +2,40 @@
 """Starting point for the game."""
 
 
+import argparse
 import sys
 
 from gui.main_controller import MainController
 
-DEFAULT_REFRESH = 0.1  # refresh delay in seconds
+
+def get_args() -> argparse.Namespace:
+    """Get command line arguments."""
+    parser = argparse.ArgumentParser(description="Atron Mining Expedition")
+    # command line arguments are for testing. eventually will move these
+    # to a configuration file
+    parser.add_argument(
+        "map_file",
+        metavar="map_file",
+        type=str,
+        nargs="?",
+        help="Map file to load",
+    )
+    parser.add_argument(
+        "-r",
+        "--refresh",
+        type=float,
+        default=0.1,
+        help="Refresh delay in seconds (default: %(default)s)",
+    )
+    return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Collect settings from the command line and start the game."""
-    map_file = sys.argv.pop(1) if sys.argv[1:] else None
-    MainController(DEFAULT_REFRESH, map_file).mainloop()
+    args = get_args()
+    map_file: str | None = args.map_file
+    print(f"Starting game with map file: {map_file}")
+    MainController(args.refresh, map_file).mainloop()
 
 
 if __name__ == "__main__":
