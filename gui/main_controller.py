@@ -51,17 +51,18 @@ class MainController(tk.Tk):
         self._dashboard = Dashboard(self)
         self._map_dir = map_dir
 
+    def _start_button_handler(self) -> None:
+        """Start the game."""
         if self._map_dir:
             random_file = random.choice(os.listdir(self._map_dir))
             map_file = os.path.join(self._map_dir, random_file)
         else:
             map_file = None
         mining_map = MapData(map_file)
+
         self._game_data.current_map = mining_map
         self._dashboard.set_map(mining_map, self._game_data.player)
 
-    def _start_button_handler(self) -> None:
-        """Start the game."""
         self.ticks.counter.reset()
         self.refined.counter.reset()
         self._start_mining()

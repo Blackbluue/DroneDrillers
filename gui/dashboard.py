@@ -45,6 +45,8 @@ class Dashboard(tkinter.Toplevel):
         Args:
             map_file (MapData): The map data.
         """
+        if self._map_window:
+            self._map_window.destroy()
         self._map_window = MapWindow(self, "Mining Map", map_data)
         self._map_window.prepare_window()
         player.deploy_player(self._map_window)
