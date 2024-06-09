@@ -14,7 +14,7 @@ from utils.game_data import GameData
 from .dashboard import Dashboard
 from .label_counter import LabeledCounter
 
-DEFAULT_TICKS = 10
+DEFAULT_TICKS = 100
 DEFAULT_REFINED = 100
 
 
