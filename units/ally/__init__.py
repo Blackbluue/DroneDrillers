@@ -2,3 +2,4 @@
 
 from .atron import Atron
 from .overlord import Overlord
+from .player import Player
