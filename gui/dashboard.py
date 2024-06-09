@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class Dashboard(tkinter.Toplevel):
     """Display information on the drones and actions in the game."""
 
-    def __init__(self, parent: tkinter.Tk, map_data: MapData) -> None:
+    def __init__(self, parent: tkinter.Tk) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Args:
@@ -30,14 +30,22 @@ class Dashboard(tkinter.Toplevel):
         self.photo = tkinter.PhotoImage(file="icon.png")
         self.configure(bg="#2C292C")
 
-        self._map_window = MapWindow(self, "Mining Map", map_data)
-        self._map_window.prepare_window()
+        self._map_window: MapWindow | None = None
 
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
         self.legend_insertion()
         self.title("Overlord's Dashboard")
+
+    def set_map(self, map_data: MapData) -> None:
+        """Set the mining map.
+
+        Args:
+            map_file (MapData): The map data.
+        """
+        self._map_window = MapWindow(self, "Mining Map", map_data)
+        self._map_window.prepare_window()
 
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
@@ -73,7 +81,8 @@ class Dashboard(tkinter.Toplevel):
 
     def refresh_map(self) -> None:
         """Refresh the GUI Map with what it's physical map contains."""
-        self._map_window.refresh_window()
+        if self._map_window:
+            self._map_window.refresh_window()
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.
