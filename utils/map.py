@@ -35,7 +35,7 @@ class MapData:
         self._height = 0
         self._landing_zone: Coordinate = DEFAULT_LANDING_ZONE
         self._all_tiles: list[MutableSequence[Tile]] = []
-        self._visible_tiles_: MutableMapping[Coordinate, Tile] = {}
+        self._visible_tiles: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: MutableSequence[Coordinate] = []
 
@@ -131,7 +131,7 @@ class MapData:
         """
         return [
             tile
-            for tile in self._visible_tiles_.values()
+            for tile in self._visible_tiles.values()
             if not tile.discovered
         ]
 
@@ -155,7 +155,7 @@ class MapData:
             coord (Coordinate): The coordinates of the tile to reveal.
         """
         tile = self._all_tiles[coord.x][coord.y]
-        self._visible_tiles_[coord] = tile
+        self._visible_tiles[coord] = tile
 
     def add_drone(self, drone: Drone) -> None:
         """Add a drone to the map.
@@ -335,7 +335,7 @@ class MapData:
         Returns:
             Tile: The Tile within this map.
         """
-        return self._visible_tiles_[key]
+        return self._visible_tiles[key]
 
     def __iter__(self) -> Iterator[Tile]:
         """Iterate over the visible tiles in this map.
@@ -343,7 +343,7 @@ class MapData:
         Yields:
             Iterator[Tile]: The visible tiles in this map.
         """
-        yield from self._visible_tiles_.values()
+        yield from self._visible_tiles.values()
 
     def __repr__(self) -> str:
         """Return a representation of this object.
