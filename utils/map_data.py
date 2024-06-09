@@ -20,6 +20,7 @@ if TYPE_CHECKING:
         Sequence,
     )
 
+    from units.ally.atron import Atron
     from units.ally.drones import Drone
 
 DEFAULT_LANDING_ZONE = Coordinate(-1, -1)
@@ -205,11 +206,38 @@ class MapData:
         self._set_actual_tile(self._landing_zone, drone.icon)
 
     def deploy_player(self) -> None:
-        """Deploy the player to the map."""
+        """Deploy the player to the map.
+
+        The player cannot be added to the map if the deploy zone is occupied.
+        """
         # Check if the landing zone is available
         if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
         self._set_actual_tile(self._landing_zone, Icon.PLAYER)
+
+    def move_to(self, atron: Atron, new_location: Coordinate) -> None:
+        """Move the atron in the given direction.
+
+        Args:
+            atron (Atron): The atron to move.
+            dirc (str): The direction to move the atron.
+        """
+        match self._get_actual_tile(new_location).icon:
+            case Icon.PLAYER | Icon.MINER | Icon.SCOUT:
+                pass  # Another Atron is already there
+            case Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY:
+                # Atron can move here
+                self._clear_tile(atron.context.coord)
+                self._set_actual_tile(new_location, atron.icon)
+                atron.context = self.build_context(new_location)
+            case Icon.WALL:  # Atron hits a wall
+                atron.health.count(-Icon.WALL.health_cost())
+            case Icon.MINERAL:  # Atron mines a mineral
+                self._total_minerals[new_location] -= 1
+                atron.payload.count(1)
+                if self._total_minerals[new_location] <= 0:
+                    self._clear_tile(new_location)
+                    del self._total_minerals[new_location]
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
@@ -223,9 +251,10 @@ class MapData:
                     drone.undeploy_drone()  # mined minerals lost
                     break  # atron is dead move on to next
 
-                direction = drone.action(drone.context)
-                if direction != Directions.CENTER.value:
-                    self._move_to(drone, direction)
+                direction = Directions(drone.action(drone.context))
+                if direction != Directions.CENTER:
+                    new_location = drone.context.coord.translate_one(direction)
+                    self.move_to(drone, new_location)
 
     def _create_box(self, width: int, height: int) -> None:
         """Create a box around the map.
@@ -316,34 +345,6 @@ class MapData:
             self._set_actual_tile(pos, Icon.ACID)
         else:
             self._set_actual_tile(pos, Icon.EMPTY)
-
-    def _move_to(self, drone: Drone, dirc: str) -> None:
-        """Move the drone in the given direction.
-
-        Args:
-            d_context (Drone): The drone to move.
-            dirc (str): The direction to move the drone.
-        """
-        cur_loc = drone.context.coord
-        new_location = cur_loc.translate_one(dirc)
-
-        match self._get_actual_tile(new_location):
-            case Icon.ATRON | Icon.MINER | Icon.SCOUT:
-                pass  # Another Drone is already there
-            case (
-                Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY
-            ):  # Drone can move here
-                self._clear_tile(cur_loc)
-                self._set_actual_tile(new_location, drone.icon)
-                drone.context = self.build_context(new_location)
-            case Icon.WALL:  # Drone hits a wall
-                drone.health.count(-Icon.WALL.health_cost())
-            case Icon.MINERAL:  # Drone mines a mineral
-                self._total_minerals[new_location] -= 1
-                drone.payload.count(1)
-                if self._total_minerals[new_location] <= 0:
-                    self._clear_tile(new_location)
-                    del self._total_minerals[new_location]
 
     def __getitem__(self, key: Coordinate) -> Tile:
         """Get the tile with the specified coordinates from the map.

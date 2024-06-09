@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
 from utils import DEFAULT_CONTEXT, Context, Icon
+from utils.directions import Directions
 
 if TYPE_CHECKING:
     from tkinter import Event
@@ -67,6 +68,18 @@ class Player(Atron):
         if self._map_window is None:
             return
 
-        map_data = self._map_window.map_data
-        print(f"clicked {event.keysym}")
+        match event.keysym:
+            case "Left":
+                direction = Directions.WEST
+            case "Right":
+                direction = Directions.EAST
+            case "Up":
+                direction = Directions.NORTH
+            case "Down":
+                direction = Directions.SOUTH
+            case _:
+                direction = Directions.CENTER
+        if direction is not Directions.CENTER:
+            new_location = self.context.coord.translate_one(direction)
+            self._map_window.map_data.move_to(self, new_location)
         self._map_window.event_generate("<<PlayerMoved>>")
