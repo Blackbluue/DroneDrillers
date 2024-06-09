@@ -18,4 +18,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt as e:
-        print("Exiting due to interrupt", file=sys.stderr)
+        print(f"Exiting due to interrupt: {e}", file=sys.stderr)
