@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .icon_var import IconVar
+
 if TYPE_CHECKING:
     from units.ally.drones import Drone
 
@@ -15,17 +17,18 @@ class Tile:
     """A single tile on the map."""
 
     def __init__(
-        self, coordinate: Coordinate, icon: Icon | None = None
+        self, coordinate: Coordinate, icon: Icon = Icon.UNKNOWN
     ) -> None:
         """Initialize the tile.
 
         Args:
             coordinate (Coordinate): The coordinate of this tile.
             icon (Icon, optional): The icon on this tile, if
-                discovered. Defaults to None.
+                discovered. Defaults to Icon.UNKNOWN.
         """
         self._coordinate = coordinate
-        self._icon = icon
+        self._icon_var: IconVar = IconVar(value=icon)
+        self._discovered: bool = False
         self._occupation: Drone | None = None
 
     @property
@@ -34,24 +37,41 @@ class Tile:
         return self._coordinate
 
     @property
-    def icon(self) -> Icon | None:
+    def icon(self) -> Icon:
         """The icon for this tile.
 
         Setting the icon for a tile implicitly makes it discovered. If a tile
         is not discovered, the icon will always be None.
         """
-        return self._occupation.icon if self._occupation else self._icon
+        return (
+            self._occupation.icon if self._occupation else self._icon_var.get()
+        )
 
     @icon.setter
     def icon(self, icon: Icon) -> None:
-        if not icon:
-            raise ValueError("Cannot set icon to None")
-        self._icon = icon
+        self._icon_var.set(icon)
+
+    @property
+    def icon_var(self) -> IconVar:
+        """The icon variant for this tile."""
+        return self._icon_var
 
     @property
     def discovered(self) -> bool:
-        """True if the tile has been discovered and has an icon, else False."""
-        return bool(self.icon)
+        """The discovered status of the tile.
+
+        An undiscovered tile cannot be occupied, and will not show on the map.
+        """
+        return self._discovered
+
+    @discovered.setter
+    def discovered(self, discovered: bool) -> None:
+        """Set the discovered status of the tile.
+
+        Args:
+            discovered (bool): Whether the tile has been discovered.
+        """
+        self._discovered = discovered
 
     @property
     def occupied_drone(self) -> Drone | None:
@@ -81,12 +101,10 @@ class Tile:
         Returns:
             bool: Whether occupation of the tile succeeded.
         """
-        if not self.icon:
+        if not self.discovered:
             raise RuntimeError("An undiscovered tile cannot be occupied")
         if not self.icon.traversable():
             return False
-        # self._old_icon = self.icon
-        # self._icon = Icon.ATRON
         self._occupation = drone
         return True
 
@@ -109,7 +127,6 @@ class Tile:
             raise RuntimeError("An undiscovered tile cannot be unoccupied")
         if not self._occupation:
             return False
-        # self._icon = self._old_icon
         self._occupation = None
         return True
 
