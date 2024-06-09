@@ -40,6 +40,11 @@ class MapWindow(tkinter.Toplevel):
         )
         self._log.pack()
 
+    @property
+    def map_data(self) -> MapData | None:
+        """The map data for this window."""
+        return self._map_data
+
     def prepare_window(self) -> None:
         """Prepare map by filling it with unknown characters."""
         self._log.config(state="normal")

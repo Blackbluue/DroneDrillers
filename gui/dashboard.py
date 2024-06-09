@@ -13,6 +13,7 @@ from .map_window import MapWindow
 if TYPE_CHECKING:
     from typing import Any, Dict, Iterable, Mapping
 
+    from units.ally import Player
     from units.ally.drones import Drone
     from utils import MapData
 
@@ -38,7 +39,7 @@ class Dashboard(tkinter.Toplevel):
         self.legend_insertion()
         self.title("Overlord's Dashboard")
 
-    def set_map(self, map_data: MapData) -> None:
+    def set_map(self, map_data: MapData, player: Player) -> None:
         """Set the mining map.
 
         Args:
@@ -46,6 +47,7 @@ class Dashboard(tkinter.Toplevel):
         """
         self._map_window = MapWindow(self, "Mining Map", map_data)
         self._map_window.prepare_window()
+        player.deploy_player(self._map_window)
 
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.

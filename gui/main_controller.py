@@ -49,7 +49,7 @@ class MainController(tk.Tk):
         self._dashboard = Dashboard(self)
         mining_map = MapData(map_file)
         self._game_data.current_map = mining_map
-        self._dashboard.set_map(mining_map)
+        self._dashboard.set_map(mining_map, self._game_data.player)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
