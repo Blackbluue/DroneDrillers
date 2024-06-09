@@ -67,6 +67,7 @@ class MainController(tk.Tk):
         self._dashboard.set_map(mining_map, self._game_data.player).bind(
             "<<PlayerMoved>>", self._process_tick
         )
+        mining_map.deploy_player()
 
         self.ticks.counter.reset()
         self._tick_tracer = self.ticks.counter.trace_add(

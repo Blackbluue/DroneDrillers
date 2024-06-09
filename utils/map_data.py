@@ -138,6 +138,23 @@ class MapData:
         except KeyError:
             return default
 
+    def build_context(self, location: Coordinate) -> Context:
+        """Build a context object for the given location.
+
+        Args:
+            location (Coordinate): The location to build the context for.
+
+        Returns:
+            Context: The context object.
+        """
+        cardinals = [
+            *map(
+                lambda tile: self._get_actual_tile(tile).icon,
+                location.cardinals(),
+            )
+        ]
+        return Context(location, *cardinals)
+
     def get_unexplored_tiles(self) -> Sequence[Tile]:
         """Return a list of all unexplored tiles on the map.
 
@@ -184,8 +201,15 @@ class MapData:
         if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
-        drone.deploy_drone(self._build_context(self._landing_zone))
+        drone.deploy_drone(self.build_context(self._landing_zone))
         self._set_actual_tile(self._landing_zone, drone.icon)
+
+    def deploy_player(self) -> None:
+        """Deploy the player to the map."""
+        # Check if the landing zone is available
+        if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
+            raise ValueError("Landing zone is occupied")
+        self._set_actual_tile(self._landing_zone, Icon.PLAYER)
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
@@ -280,23 +304,6 @@ class MapData:
             )
         return coordinates
 
-    def _build_context(self, location: Coordinate) -> Context:
-        """Build a context object for the given location.
-
-        Args:
-            location (Coordinate): The location to build the context for.
-
-        Returns:
-            Context: The context object.
-        """
-        cardinals = [
-            *map(
-                lambda tile: self._get_actual_tile(tile).icon,
-                location.cardinals(),
-            )
-        ]
-        return Context(location, *cardinals)
-
     def _clear_tile(self, pos: Coordinate) -> None:
         """Clear the tile at the given coordinates.
 
@@ -328,7 +335,7 @@ class MapData:
             ):  # Drone can move here
                 self._clear_tile(cur_loc)
                 self._set_actual_tile(new_location, drone.icon)
-                drone.context = self._build_context(new_location)
+                drone.context = self.build_context(new_location)
             case Icon.WALL:  # Drone hits a wall
                 drone.health.count(-Icon.WALL.health_cost())
             case Icon.MINERAL:  # Drone mines a mineral

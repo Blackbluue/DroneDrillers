@@ -41,7 +41,7 @@ class MapWindow(tkinter.Toplevel):
         self._log.pack()
 
     @property
-    def map_data(self) -> MapData | None:
+    def map_data(self) -> MapData:
         """The map data for this window."""
         return self._map_data
 

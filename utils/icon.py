@@ -10,6 +10,7 @@ class Icon(Enum):
     ATRON = "A"
     SCOUT = "S"
     MINER = "M"
+    PLAYER = "P"
     WALL = "#"
     DEPLOY_ZONE = "_"
     MINERAL = "*"
@@ -48,13 +49,14 @@ class Icon(Enum):
             str: The icon as a unicode character.
         """
         return {
-            Icon.WALL: "\u039E",
-            Icon.ACID: "\u05e1",
+            Icon.ATRON: "\u00C4",
             Icon.SCOUT: "\u00A7",
             Icon.MINER: "\u00A3",
-            Icon.MINERAL: "\u0275",
-            Icon.ATRON: "\u00C4",
+            Icon.PLAYER: "\u20B1",
+            Icon.WALL: "\u039E",
             Icon.DEPLOY_ZONE: "\u02c5",
+            Icon.MINERAL: "\u0275",
+            Icon.ACID: "\u05e1",
             Icon.EMPTY: " ",
             Icon.UNKNOWN: "\u02D1",
         }[self]
