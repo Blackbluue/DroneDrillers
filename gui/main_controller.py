@@ -61,28 +61,29 @@ class MainController(tk.Tk):
         mining_map = MapData(map_file)
 
         self._game_data.current_map = mining_map
-        self._dashboard.set_map(mining_map, self._game_data.player)
+        self._dashboard.set_map(mining_map, self._game_data.player).bind(
+            "<<PlayerMoved>>", self._process_tick
+        )
 
         self.ticks.counter.reset()
         self.refined.counter.reset()
         self._start_mining()
 
-    def _process_tick(self, mining_map: MapData) -> int:
+    def _process_tick(self, event: tk.Event) -> None:
         """Process a tick of the game.
 
         Args:
-            maps (MapData): The map to process.
-
-        Returns:
-            int: The total mined minerals.
+            event (tk.Event): The event that triggered the tick.
         """
-        mined = 0
+        if not (mining_map := self._game_data.current_map):
+            return
+
         overlord = self._game_data.overlord
         action, _, opts = overlord.order_drones().partition(" ")
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
-                mined += mining_map.remove_drone(overlord.drones[drone_id])
+                mining_map.remove_drone(overlord.drones[drone_id])
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
@@ -98,17 +99,12 @@ class MainController(tk.Tk):
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
         time.sleep(self._refresh_delay)
-        return mined
 
     def _start_mining(self) -> None:
         """Start the mining expedition."""
-        if (mining_map := self._game_data.current_map) is None:
-            raise ValueError("No mining map")
-
         total_mined = 0
         for _ in range(self.ticks.counter.get()):
             self.ticks.counter.count(-1)
             self.update_idletasks()
-            total_mined += self._process_tick(mining_map)
 
         print("Total mined:", total_mined, file=sys.stderr)

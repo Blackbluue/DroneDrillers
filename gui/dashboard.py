@@ -39,7 +39,7 @@ class Dashboard(tkinter.Toplevel):
         self.legend_insertion()
         self.title("Overlord's Dashboard")
 
-    def set_map(self, map_data: MapData, player: Player) -> None:
+    def set_map(self, map_data: MapData, player: Player) -> MapWindow:
         """Set the mining map.
 
         Args:
@@ -50,6 +50,7 @@ class Dashboard(tkinter.Toplevel):
         self._map_window = MapWindow(self, "Mining Map", map_data)
         self._map_window.prepare_window()
         player.deploy_player(self._map_window)
+        return self._map_window
 
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
