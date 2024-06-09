@@ -16,9 +16,9 @@ class Counter(tk.IntVar):
         """Create a counter variable.
 
         Args:
-            master (tk.Widget): The parent widget.
+            master (tk.Widget | None, optional): The parent widget. Defaults to None.
             value (int): The default value for the counter.
-            name (str): The name of the counter.
+            name (str | None, optional): The name of the counter.. Defaults to None.
             max_value (int): The maximum value for the counter.
         """
         super().__init__(master, value, name)
