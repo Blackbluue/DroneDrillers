@@ -45,8 +45,10 @@ class MainController(tk.Tk):
         )
         self.start_button.pack()
 
-        self._game_data = GameData(map_file)
-        self._dashboard = Dashboard(self, self._game_data.mining_map)
+        mining_map = MapData(map_file)
+        self._game_data = GameData()
+        self._game_data.current_map = mining_map
+        self._dashboard = Dashboard(self, mining_map)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
@@ -71,7 +73,7 @@ class MainController(tk.Tk):
                 print(file=sys.stderr)
         print("-" * 100, file=sys.stderr)
 
-    def process_tick(
+    def _process_tick(
         self,
         mining_map: MapData,
     ) -> int:
@@ -110,12 +112,15 @@ class MainController(tk.Tk):
 
     def _start_mining(self) -> None:
         """Start the mining expedition."""
+        if (mining_map := self._game_data.current_map) is None:
+            raise ValueError("No mining map")
+
         self._print_drone_info()
 
         mined = 0
         for _ in range(DEFAULT_TICKS):
             self.ticks.counter.count(-1)
             self.update_idletasks()
-            mined += self.process_tick(self._game_data.mining_map)
+            mined += self._process_tick(mining_map)
 
         print("Total mined:", mined, file=sys.stderr)

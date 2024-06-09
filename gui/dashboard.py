@@ -30,8 +30,8 @@ class Dashboard(tkinter.Toplevel):
         self.photo = tkinter.PhotoImage(file="icon.png")
         self.configure(bg="#2C292C")
 
-        self._map_data = MapWindow(self, "Mining Map", map_data)
-        self._map_data.prepare_window()
+        self._map_window = MapWindow(self, "Mining Map", map_data)
+        self._map_window.prepare_window()
 
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
@@ -73,7 +73,7 @@ class Dashboard(tkinter.Toplevel):
 
     def refresh_map(self) -> None:
         """Refresh the GUI Map with what it's physical map contains."""
-        self._map_data.refresh_window()
+        self._map_window.refresh_window()
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.

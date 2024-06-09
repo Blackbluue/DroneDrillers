@@ -16,11 +16,10 @@ if TYPE_CHECKING:
 class GameData:
     """Store game data."""
 
-    def __init__(self, map_file: str | None) -> None:
-        self._mining_map = MapData(map_file)
-        self._player = Player(self._mining_map)
+    def __init__(self) -> None:
+        self._current_map: MapData | None = None
+        self._player = Player()
         self._overlord = Overlord()
-        self._overlord.set_map(self._mining_map)
         self._drones = self._overlord.drones
 
     @property
@@ -29,9 +28,19 @@ class GameData:
         return self._player
 
     @property
-    def mining_map(self) -> MapData:
-        """The mining map."""
-        return self._mining_map
+    def current_map(self) -> MapData | None:
+        """The current mining map."""
+        return self._current_map
+
+    @current_map.setter
+    def current_map(self, map_data: MapData) -> None:
+        """Set the mining map.
+
+        Args:
+            map_file (MapData): The map data.
+        """
+        self._current_map = map_data
+        self._overlord.set_map(self._current_map)
 
     @property
     def overlord(self) -> Overlord:

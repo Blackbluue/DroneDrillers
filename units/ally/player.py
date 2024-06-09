@@ -9,6 +9,6 @@ DEFAULT_HEALTH = 100
 class Player(Atron):
     """Player unit class."""
 
-    def __init__(self, mining_map: MapData) -> None:
+    def __init__(self) -> None:
         super().__init__(DEFAULT_HEALTH)
-        self._mining_map = mining_map
+        self._mining_map: MapData | None = None
