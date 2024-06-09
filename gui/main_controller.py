@@ -98,7 +98,7 @@ class MainController(tk.Tk):
             int: The total mined minerals.
         """
         mined = 0
-        action, _, opts = self._overlord.action().partition(" ")
+        action, _, opts = self._overlord.order_drones().partition(" ")
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))

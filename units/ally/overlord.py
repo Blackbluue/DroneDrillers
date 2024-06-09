@@ -64,15 +64,16 @@ class Overlord(Atron):
         """
         self._mining_map = mining_map
 
-    def action(self, context=None) -> str:
-        """Perform some action, based on the context of the situation.
+    def order_drones(self) -> str:
+        """Give orders to the drones.
 
-        Args:
-            context (Context): Context surrounding the overlord;
-                currently unused
+        Makes decisions on what tasks to assign to drones. If the overlord
+        decides to deploy or retrieve a drone, it will return the action
+        for the drone to perform. Otherwise, it will return an empty string.
+
 
         Returns:
-            str: The action for the overlord to perform
+            str: The action for the overlord to perform.
         """
         return ""
 

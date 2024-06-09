@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
@@ -21,7 +22,7 @@ DEFAULT_CAPACITY = 10
 DEFAULT_MOVES = 1
 
 
-class Drone(Atron):
+class Drone(Atron, ABC):
     """Parent class for all drone atron units."""
 
     def __init__(self, overlord: Overlord) -> None:
@@ -98,6 +99,21 @@ class Drone(Atron):
     def icon(self) -> Icon:
         """The icon of this drone type."""
         raise NotImplementedError("Drone subtypes must implement icon")
+
+    @abstractmethod
+    def action(self, context: Context) -> str:
+        """Perform some action, based on the type of drone.
+
+        The drone will internally have it's own orders set by the overlord.
+        These orders may take the context into account.
+
+        Args:
+            context (Context): The context surrounding the drone.
+
+        Returns:
+            str: The action the drone wants to take.
+        """
+        raise NotImplementedError("Drone subtypes must implement action")
 
     def deploy_drone(self, context: Context) -> None:
         """Deploy the drone to the map."""

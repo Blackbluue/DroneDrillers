@@ -1,17 +1,9 @@
 """Abstract base class for all atron units."""
 
-from __future__ import annotations
-
-from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
-
 from utils import Counter
 
-if TYPE_CHECKING:
-    from utils import Context
 
-
-class Atron(ABC):
+class Atron:
     """Abstract base class for all atron units."""
 
     def __init__(self, health: int) -> None:
@@ -37,18 +29,6 @@ class Atron(ABC):
             Counter: The current health.
         """
         return self._health
-
-    @abstractmethod
-    def action(self, context: Context) -> str:
-        """Perform some action, based on the type of atron.
-
-        Args:
-            context (Context): The context surrounding the atron.
-
-        Returns:
-            str: The action the atron wants to take.
-        """
-        raise NotImplementedError("Atron subtypes must implement action")
 
     def __str__(self):
         """Return the string representation of this object.
