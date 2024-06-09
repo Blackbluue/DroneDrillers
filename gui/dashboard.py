@@ -52,6 +52,13 @@ class Dashboard(tkinter.Toplevel):
         player.deploy_player(self._map_window)
         return self._map_window
 
+    def unset_map(self) -> None:
+        """Unset the mining map."""
+        if self._map_window:
+            self._map_window.unbind("<<PlayerMoved>>")
+            self._map_window.destroy()
+            self._map_window = None
+
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 

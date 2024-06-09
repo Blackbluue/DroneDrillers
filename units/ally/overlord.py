@@ -56,11 +56,11 @@ class Overlord(Atron):
         self._tasked_minerals: MutableSet[Coordinate] = set()
         # a set of the coords of tasked minerals
 
-    def set_map(self, mining_map: MapData) -> None:
+    def set_map(self, mining_map: MapData | None) -> None:
         """Register the mining map to the overlord.
 
         Args:
-            mining_map (MapData): The map to register.
+            mining_map (MapData | None): The map to register.
         """
         self._mining_map = mining_map
 

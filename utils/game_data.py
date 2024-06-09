@@ -33,11 +33,11 @@ class GameData:
         return self._current_map
 
     @current_map.setter
-    def current_map(self, map_data: MapData) -> None:
+    def current_map(self, map_data: MapData | None) -> None:
         """Set the mining map.
 
         Args:
-            map_file (MapData): The map data.
+            map_file (MapData | None): The map data.
         """
         self._current_map = map_data
         self._overlord.set_map(self._current_map)

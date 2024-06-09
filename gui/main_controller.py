@@ -42,10 +42,11 @@ class MainController(tk.Tk):
             max_value=DEFAULT_REFINED,
         )
         self._refresh_delay = refresh_delay
-        self.start_button = tk.Button(
+        self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
-        self.start_button.pack()
+        self._start_button.pack()
+        self._tick_tracer = ""
 
         self._game_data = GameData()
         self._dashboard = Dashboard(self)
@@ -53,6 +54,8 @@ class MainController(tk.Tk):
 
     def _start_button_handler(self) -> None:
         """Start the game."""
+        self._reset_map()
+
         if self._map_dir:
             random_file = random.choice(os.listdir(self._map_dir))
             map_file = os.path.join(self._map_dir, random_file)
@@ -66,8 +69,10 @@ class MainController(tk.Tk):
         )
 
         self.ticks.counter.reset()
+        self._tick_tracer = self.ticks.counter.trace_add(
+            "write", self._finish_mining
+        )
         self.refined.counter.reset()
-        self._start_mining()
 
     def _process_tick(self, event: tk.Event) -> None:
         """Process a tick of the game.
@@ -99,12 +104,25 @@ class MainController(tk.Tk):
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
         time.sleep(self._refresh_delay)
+        self.ticks.counter.count(-1)
 
-    def _start_mining(self) -> None:
-        """Start the mining expedition."""
-        total_mined = 0
-        for _ in range(self.ticks.counter.get()):
-            self.ticks.counter.count(-1)
-            self.update_idletasks()
+    def _reset_map(self) -> None:
+        """Reset the mining map."""
+        if self._tick_tracer:
+            self.ticks.counter.trace_remove("write", self._tick_tracer)
+            self._tick_tracer = ""
+        self._game_data.player.retrieve_player()
+        self._game_data.current_map = None
 
-        print("Total mined:", total_mined, file=sys.stderr)
+    def _finish_mining(self, var: str, index: str, mode: str) -> None:
+        """Finish the mining expedition.
+
+        Args:
+            var (str): The variable that was modified.
+            index (str): The index of the variable.
+            mode (str): The mode of the variable.
+        """
+        total_mined = 0  # TODO: this should be maintained by the game data
+        if self.ticks.counter.get() == 0:
+            self._reset_map()
+            print("Total mined:", total_mined, file=sys.stderr)

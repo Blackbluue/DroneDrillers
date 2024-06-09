@@ -20,6 +20,10 @@ class Player(Atron):
     def __init__(self) -> None:
         super().__init__(DEFAULT_HEALTH)
         self._map_window: MapWindow | None = None
+        self._l_bind = None
+        self._r_bind = None
+        self._u_bind = None
+        self._d_bind = None
 
     def deploy_player(self, map_window: MapWindow) -> None:
         """Deploy the player on the map.
@@ -28,10 +32,20 @@ class Player(Atron):
             map_window (MapWindow): The map window to deploy the player on.
         """
         self._map_window = map_window
-        map_window.bind("<Left>", self.move_player, add=True)
-        map_window.bind("<Right>", self.move_player, add=True)
-        map_window.bind("<Up>", self.move_player, add=True)
-        map_window.bind("<Down>", self.move_player, add=True)
+        self._l_bind = map_window.bind("<Left>", self.move_player, add=True)
+        self._r_bind = map_window.bind("<Right>", self.move_player, add=True)
+        self._u_bind = map_window.bind("<Up>", self.move_player, add=True)
+        self._d_bind = map_window.bind("<Down>", self.move_player, add=True)
+
+    def retrieve_player(self) -> None:
+        """Retrieve the player from the map."""
+        if self._map_window is None:
+            return
+        self._map_window.unbind("<Left>", self._l_bind)
+        self._map_window.unbind("<Right>", self._r_bind)
+        self._map_window.unbind("<Up>", self._u_bind)
+        self._map_window.unbind("<Down>", self._d_bind)
+        self._map_window = None
 
     def move_player(self, event: Event) -> None:
         """Move the player on the map.
