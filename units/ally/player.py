@@ -1,7 +1,7 @@
 """Player unit class."""
 
 from units.ally.atron import Atron
-from utils.map import MapData
+from utils import MapData
 
 DEFAULT_HEALTH = 100
 
