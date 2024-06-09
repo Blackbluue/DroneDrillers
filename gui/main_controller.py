@@ -6,8 +6,8 @@ import sys
 import time
 import tkinter as tk
 
-from units.ally import Overlord
 from utils import MapData
+from utils.game_data import GameData
 
 from .dashboard import Dashboard
 from .label_counter import LabeledCounter
@@ -45,10 +45,8 @@ class MainController(tk.Tk):
         )
         self.start_button.pack()
 
-        self._mining_map = MapData(map_file)
-        self._dashboard = Dashboard(self, self._mining_map)
-        self._overlord = Overlord()
-        self._overlord.set_map(self._mining_map)
+        self._game_data = GameData(map_file)
+        self._dashboard = Dashboard(self, self._game_data.mining_map)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
@@ -63,7 +61,7 @@ class MainController(tk.Tk):
             (fmt_string * 3).format("Drone ID", "Drone Type"), file=sys.stderr
         )
 
-        for idx, a_drone in enumerate(self._overlord.drones.values()):
+        for idx, a_drone in enumerate(self._game_data.drones.values()):
             print(
                 fmt_string.format(id(a_drone), type(a_drone).__name__),
                 file=sys.stderr,
@@ -86,26 +84,23 @@ class MainController(tk.Tk):
             int: The total mined minerals.
         """
         mined = 0
-        action, _, opts = self._overlord.order_drones().partition(" ")
+        overlord = self._game_data.overlord
+        action, _, opts = overlord.order_drones().partition(" ")
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
-                mined += mining_map.remove_drone(
-                    self._overlord.drones[drone_id]
-                )
+                mined += mining_map.remove_drone(overlord.drones[drone_id])
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
-                mining_map.add_drone(self._overlord.drones[drone_id])
+                mining_map.add_drone(overlord.drones[drone_id])
             case "":
                 pass  # Do nothing
             case _:  # Ignore other actions
                 print(f"Unknown action: {action}", file=sys.stderr)
 
         deployed_drones = list(
-            filter(
-                lambda drone: drone.deployed, self._overlord.drones.values()
-            )
+            filter(lambda drone: drone.deployed, overlord.drones.values())
         )
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
@@ -121,6 +116,6 @@ class MainController(tk.Tk):
         for _ in range(DEFAULT_TICKS):
             self.ticks.counter.count(-1)
             self.update_idletasks()
-            mined += self.process_tick(self._mining_map)
+            mined += self.process_tick(self._game_data.mining_map)
 
         print("Total mined:", mined, file=sys.stderr)
