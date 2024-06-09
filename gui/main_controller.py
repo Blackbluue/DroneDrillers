@@ -67,27 +67,7 @@ class MainController(tk.Tk):
         self.refined.counter.reset()
         self._start_mining()
 
-    def _print_drone_info(self) -> None:
-        """Print out drone information."""
-        fmt_string = "{0:<18}{1:12}"
-        print(
-            (fmt_string * 3).format("Drone ID", "Drone Type"), file=sys.stderr
-        )
-
-        for idx, a_drone in enumerate(self._game_data.drones.values()):
-            print(
-                fmt_string.format(id(a_drone), type(a_drone).__name__),
-                file=sys.stderr,
-                end="",
-            )
-            if idx % 3 == 2:
-                print(file=sys.stderr)
-        print("-" * 100, file=sys.stderr)
-
-    def _process_tick(
-        self,
-        mining_map: MapData,
-    ) -> int:
+    def _process_tick(self, mining_map: MapData) -> int:
         """Process a tick of the game.
 
         Args:
@@ -117,7 +97,6 @@ class MainController(tk.Tk):
         )
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
-        print(f"SubTotal mined: {mined}", file=sys.stderr)
         time.sleep(self._refresh_delay)
         return mined
 
@@ -126,12 +105,10 @@ class MainController(tk.Tk):
         if (mining_map := self._game_data.current_map) is None:
             raise ValueError("No mining map")
 
-        self._print_drone_info()
-
-        mined = 0
+        total_mined = 0
         for _ in range(DEFAULT_TICKS):
             self.ticks.counter.count(-1)
             self.update_idletasks()
-            mined += self._process_tick(mining_map)
+            total_mined += self._process_tick(mining_map)
 
-        print("Total mined:", mined, file=sys.stderr)
+        print("Total mined:", total_mined, file=sys.stderr)
