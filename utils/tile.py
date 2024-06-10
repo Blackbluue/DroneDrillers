@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from tkinter import BooleanVar
 from typing import TYPE_CHECKING
 
 from .icon_var import IconVar
@@ -16,19 +17,16 @@ if TYPE_CHECKING:
 class Tile:
     """A single tile on the map."""
 
-    def __init__(
-        self, coordinate: Coordinate, icon: Icon = Icon.UNKNOWN
-    ) -> None:
+    def __init__(self, coordinate: Coordinate, icon: Icon) -> None:
         """Initialize the tile.
 
         Args:
             coordinate (Coordinate): The coordinate of this tile.
-            icon (Icon, optional): The icon on this tile, if
-                discovered. Defaults to Icon.UNKNOWN.
+            icon (Icon): The icon on this tile.
         """
         self._coordinate = coordinate
         self._icon_var: IconVar = IconVar(value=icon)
-        self._discovered: bool = False
+        self._discovered = BooleanVar(value=False)
         self._occupation: Drone | None = None
 
     @property
@@ -57,21 +55,12 @@ class Tile:
         return self._icon_var
 
     @property
-    def discovered(self) -> bool:
+    def discovered(self) -> BooleanVar:
         """The discovered status of the tile.
 
         An undiscovered tile cannot be occupied, and will not show on the map.
         """
         return self._discovered
-
-    @discovered.setter
-    def discovered(self, discovered: bool) -> None:
-        """Set the discovered status of the tile.
-
-        Args:
-            discovered (bool): Whether the tile has been discovered.
-        """
-        self._discovered = discovered
 
     @property
     def occupied_drone(self) -> Drone | None:

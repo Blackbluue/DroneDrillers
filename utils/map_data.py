@@ -187,8 +187,12 @@ class MapData:
         Args:
             coord (Coordinate): The coordinates of the tile to reveal.
         """
-        tile = self._all_tiles[coord.x][coord.y]
+        try:
+            tile = self._all_tiles[coord.x][coord.y]
+        except IndexError:
+            return  # Ignore out of bounds coordinates
         self._visible_tiles[coord] = tile
+        tile.discovered.set(True)
 
     def add_drone(self, drone: Drone) -> None:
         """Add a drone to the map.
@@ -204,6 +208,9 @@ class MapData:
 
         drone.deploy_drone(self.build_context(self._landing_zone))
         self._set_actual_tile(self._landing_zone, drone.icon)
+        self.reveal_tile(self._landing_zone)
+        for coord in self._landing_zone.cardinals():
+            self.reveal_tile(coord)
 
     def deploy_player(self) -> None:
         """Deploy the player to the map.
@@ -214,6 +221,9 @@ class MapData:
         if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
         self._set_actual_tile(self._landing_zone, Icon.PLAYER)
+        self.reveal_tile(self._landing_zone)
+        for coord in self._landing_zone.cardinals():
+            self.reveal_tile(coord)
 
     def move_to(self, atron: Atron, new_location: Coordinate) -> None:
         """Move the atron in the given direction.
@@ -230,6 +240,9 @@ class MapData:
                 self._clear_tile(atron.context.coord)
                 self._set_actual_tile(new_location, atron.icon)
                 atron.context = self.build_context(new_location)
+                self.reveal_tile(new_location)
+                for coord in new_location.cardinals():
+                    self.reveal_tile(coord)
             case Icon.WALL:  # Atron hits a wall
                 atron.health.count(-Icon.WALL.health_cost())
             case Icon.MINERAL:  # Atron mines a mineral
@@ -366,7 +379,8 @@ class MapData:
         Yields:
             Iterator[Tile]: The visible tiles in this map.
         """
-        yield from self._visible_tiles.values()
+        for row in self._all_tiles:
+            yield from row
 
     def __repr__(self) -> str:
         """Return a representation of this object.

@@ -68,6 +68,7 @@ class MainController(tk.Tk):
             "<<PlayerMoved>>", self._process_tick
         )
         mining_map.deploy_player()
+        self._dashboard.refresh_map()
 
         self.ticks.counter.reset()
         self._tick_tracer = self.ticks.counter.trace_add(
@@ -103,6 +104,7 @@ class MainController(tk.Tk):
             filter(lambda drone: drone.deployed, overlord.drones.values())
         )
         mining_map.tick(deployed_drones)
+        self._dashboard.refresh_map()
         print(mining_map, file=sys.stderr)
         time.sleep(self._refresh_delay)
         self.ticks.counter.count(-1)

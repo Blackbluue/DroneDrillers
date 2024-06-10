@@ -54,24 +54,43 @@ class MapWindow(tkinter.Toplevel):
             self._log.insert(f"{x_axis}.{y_axis}", Icon.UNKNOWN.unicode())
             self._log.insert(tkinter.END, "\n")
 
+        for tile in iter(self._map_data):
+            tile.icon_var.trace_add(
+                "write", lambda *_: self._update_tile_icon(tile)
+            )
+            tile.discovered.trace_add(
+                "write", lambda *_: self._update_tile_fog(tile)
+            )
         self._log.config(state="disabled")
 
     def refresh_window(self) -> None:
         """Refresh MapWindow with any updated coordinates."""
         for tile in iter(self._map_data):
-            self.translate_tile(tile)
+            self._update_tile_icon(tile)
 
-    def translate_tile(self, new_tile: Tile) -> None:
-        """Write a tile object to the map.
+    def _update_tile_icon(self, tile: Tile) -> None:
+        """Change the icon of a tile on the map.
 
-        new_tile (Tile) : Specifies the tile that should be written into the
-            map
+        new_tile (Tile) : The tile that should be updated.
         """
         self._log.config(state="normal")
-        unicode_character = (
-            new_tile.icon.unicode() if new_tile.icon else "\u2061"
-        )
-        coordinates = f"{new_tile.coordinate[1]}.{new_tile.coordinate[0]}"
+        coordinates = f"{tile.coordinate.y}.{tile.coordinate.x}"
+        self._log.delete(coordinates)
+        self._log.insert(coordinates, tile.icon.unicode())
+        self._log.config(state="disabled")
+
+    def _update_tile_fog(self, tile: Tile) -> None:
+        """Change the revealed status of a tile on the map.
+
+        new_tile (Tile) : The tile that should be updated.
+        """
+        self._log.config(state="normal")
+        if tile.discovered.get():
+            unicode_character = tile.icon.unicode()
+        else:
+            unicode_character = Icon.UNKNOWN.unicode()
+
+        coordinates = f"{tile.coordinate.y}.{tile.coordinate.x}"
         self._log.delete(coordinates)
         self._log.insert(coordinates, unicode_character)
         self._log.config(state="disabled")
