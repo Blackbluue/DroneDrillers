@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import DEFAULT_CONTEXT, Context, Coordinate
+from utils import Context, Coordinate
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
@@ -20,7 +20,7 @@ DEFAULT_CAPACITY = 10
 DEFAULT_MOVES = 1
 
 
-class Drone(Atron, ABC):
+class Drone(Atron):
     """Parent class for all drone atron units."""
 
     def __init__(self, overlord: Overlord) -> None:
@@ -38,15 +38,6 @@ class Drone(Atron, ABC):
             int: The drone's max moves.
         """
         return self._moves
-
-    @property
-    def deployed(self) -> bool:
-        """Whether this drone has been deployed.
-
-        Returns:
-            bool: True if deployed, False otherwise.
-        """
-        return self._context != DEFAULT_CONTEXT
 
     @property
     def path(self) -> MutableSequence[Coordinate]:
@@ -78,25 +69,6 @@ class Drone(Atron, ABC):
             str: The action the drone wants to take.
         """
         raise NotImplementedError("Drone subtypes must implement action")
-
-    def deploy_drone(self, context: Context) -> None:
-        """Deploy the drone to the map."""
-        if self.deployed:
-            raise ValueError("Drone already deployed")
-        self._context = context
-
-    def undeploy_drone(self) -> int:
-        """Retrieve the drone from the map and extract the payload.
-
-        Returns:
-            int: The payload of this drone.
-        """
-        if not self.deployed:
-            raise ValueError("Drone not deployed")
-        self._context = DEFAULT_CONTEXT
-        payload = self._payload.get()
-        self._payload.reset()
-        return payload
 
 
 class State(Enum):

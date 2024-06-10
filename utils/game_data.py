@@ -40,7 +40,7 @@ class GameData:
             map_file (MapData | None): The map data.
         """
         self._current_map = map_data
-        self._overlord.set_map(self._current_map)
+        # self._overlord.deploy(self._current_map)
 
     @property
     def overlord(self) -> Overlord:

@@ -67,7 +67,6 @@ class MainController(tk.Tk):
         self._dashboard.set_map(mining_map, self._game_data.player).bind(
             "<<PlayerMoved>>", self._process_tick
         )
-        mining_map.deploy_player()
 
         self.ticks.counter.reset()
         self._tick_tracer = self.ticks.counter.trace_add(
@@ -93,7 +92,7 @@ class MainController(tk.Tk):
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
-                mining_map.add_drone(overlord.drones[drone_id])
+                mining_map.deploy_atron(overlord.drones[drone_id])
             case "":
                 pass  # Do nothing
             case _:  # Ignore other actions
@@ -112,7 +111,8 @@ class MainController(tk.Tk):
         if self._tick_tracer:
             self.ticks.counter.trace_remove("write", self._tick_tracer)
             self._tick_tracer = ""
-        self._game_data.player.retrieve_player()
+        if self._game_data.player.deployed:
+            self._game_data.player.undeploy()
         self._game_data.current_map = None
 
     def _finish_mining(self, var: str, index: str, mode: str) -> None:

@@ -7,7 +7,3 @@ from .directions import Directions
 from .icon import Icon
 from .map_data import MapData
 from .tile import Tile
-
-# static constants that others may need
-DEFAULT_COORDINATE = Coordinate(-1, -1)
-DEFAULT_CONTEXT = Context(DEFAULT_COORDINATE, *[Icon.UNKNOWN] * 4)

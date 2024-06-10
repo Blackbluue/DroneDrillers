@@ -5,7 +5,7 @@ from __future__ import annotations
 from queue import PriorityQueue, SimpleQueue
 from typing import TYPE_CHECKING
 
-from utils import Context, Icon, MapData
+from utils import Context, Icon
 
 from .atron import Atron
 from .drones import Drone
@@ -18,7 +18,8 @@ if TYPE_CHECKING:
         MutableSet,
     )
 
-    from utils import Coordinate
+    from gui.map_window import MapWindow
+    from utils import Coordinate, MapData
 
 DEFAULT_HEALTH = 10
 
@@ -61,13 +62,14 @@ class Overlord(Atron):
         """The icon of this drone type."""
         return Icon.DEPLOY_ZONE
 
-    def set_map(self, mining_map: MapData | None) -> None:
-        """Register the mining map to the overlord.
+    def deploy(self, map_window: MapWindow) -> None:
+        """Deploy the overlord on the map.
 
         Args:
-            mining_map (MapData | None): The map to register.
+            map_window (MapWindow): The map window to deploy the overlord on.
         """
-        self._mining_map = mining_map
+        super().deploy(map_window)
+        self._mining_map = map_window.map_data
 
     def order_drones(self) -> str:
         """Give orders to the drones.

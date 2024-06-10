@@ -188,7 +188,7 @@ class MapData:
         Returns:
             int: The mined mineral count.
         """
-        payload = drone.undeploy_drone()
+        payload = drone.undeploy()
         self._clear_tile(drone.context.coord)
         return payload
 
@@ -202,33 +202,19 @@ class MapData:
             if not tile.discovered.get():
                 tile.discovered.set(True)
 
-    def add_drone(self, drone: Drone) -> None:
-        """Add a drone to the map.
+    def deploy_atron(self, atron: Atron) -> None:
+        """Add an atron to the map.
 
-        The drone cannot be added to the map if the deploy zone is occupied.
+        The atron cannot be added to the map if the deploy zone is occupied.
 
         Args:
-            drone (Drone): The drone to add to the map.
+            atron (Atron): The atron to add to the map.
         """
-        # Check if the landing zone is available
         if self[self._landing_zone].icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
-        drone.deploy_drone(self.build_context(self._landing_zone))
-        self[self._landing_zone] = drone.icon
-        self.reveal_tile(self._landing_zone)
-        for coord in self._landing_zone.cardinals():
-            self.reveal_tile(coord)
-
-    def deploy_player(self) -> None:
-        """Deploy the player to the map.
-
-        The player cannot be added to the map if the deploy zone is occupied.
-        """
-        # Check if the landing zone is available
-        if self[self._landing_zone].icon != Icon.DEPLOY_ZONE:
-            raise ValueError("Landing zone is occupied")
-        self[self._landing_zone] = Icon.PLAYER
+        atron.context = self.build_context(self._landing_zone)
+        self[self._landing_zone] = atron.icon
         self.reveal_tile(self._landing_zone)
         for coord in self._landing_zone.cardinals():
             self.reveal_tile(coord)
@@ -269,7 +255,7 @@ class MapData:
                     drone.health.count(-Icon.ACID.health_cost())
                 if drone.health.get() <= 0:
                     self._clear_tile(drone.context.coord)
-                    drone.undeploy_drone()  # mined minerals lost
+                    drone.undeploy()  # mined minerals lost
                     break  # atron is dead move on to next
 
                 direction = Directions(drone.action(drone.context))
