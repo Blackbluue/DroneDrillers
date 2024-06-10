@@ -43,7 +43,6 @@ class MapData:
         self._height = 0
         self._landing_zone: Coordinate = DEFAULT_LANDING_ZONE
         self._all_tiles: list[MutableSequence[Tile]] = []
-        self._visible_tiles: MutableMapping[Coordinate, Tile] = {}
         self._total_minerals: MutableMapping[Coordinate, int] = {}
         self._acid: MutableSequence[Coordinate] = []
         if map_file:
@@ -107,7 +106,7 @@ class MapData:
         self._create_box(width, height)
 
         self._landing_zone = self._get_rand_coords()
-        self._set_actual_tile(self._landing_zone, Icon.DEPLOY_ZONE)
+        self[self._landing_zone] = Icon.DEPLOY_ZONE
 
         wall_count = ((width * 2) + (height * 2)) - 4
         total_coordinates = self._width * self._height
@@ -150,7 +149,7 @@ class MapData:
         """
         cardinals = [
             *map(
-                lambda tile: self._get_actual_tile(tile).icon,
+                lambda coord: self[coord].icon,
                 location.cardinals(),
             )
         ]
@@ -162,11 +161,23 @@ class MapData:
         Returns:
             Sequence[Tile]: The unexplored tile list.
         """
-        return [
-            tile
-            for tile in self._visible_tiles.values()
-            if not tile.discovered
-        ]
+        tiles: Sequence[Tile] = []
+        for row in self._all_tiles:
+            tiles.extend(
+                list(filter(lambda tile: not tile.discovered.get(), row))
+            )
+        return tiles
+
+    def get_explored_tiles(self) -> Sequence[Tile]:
+        """Return a list of all explored tiles on the map.
+
+        Returns:
+            Sequence[Tile]: The explored tile list.
+        """
+        tiles: Sequence[Tile] = []
+        for row in self._all_tiles:
+            tiles.extend(list(filter(lambda tile: tile.discovered.get(), row)))
+        return tiles
 
     def remove_drone(self, drone: Drone) -> int:
         """Removes drone from map and returns the mined minerals.
@@ -187,12 +198,9 @@ class MapData:
         Args:
             coord (Coordinate): The coordinates of the tile to reveal.
         """
-        try:
-            tile = self._all_tiles[coord.x][coord.y]
-        except IndexError:
-            return  # Ignore out of bounds coordinates
-        self._visible_tiles[coord] = tile
-        tile.discovered.set(True)
+        if tile := self.get(coord, None):
+            if not tile.discovered.get():
+                tile.discovered.set(True)
 
     def add_drone(self, drone: Drone) -> None:
         """Add a drone to the map.
@@ -203,11 +211,11 @@ class MapData:
             drone (Drone): The drone to add to the map.
         """
         # Check if the landing zone is available
-        if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
+        if self[self._landing_zone].icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
         drone.deploy_drone(self.build_context(self._landing_zone))
-        self._set_actual_tile(self._landing_zone, drone.icon)
+        self[self._landing_zone] = drone.icon
         self.reveal_tile(self._landing_zone)
         for coord in self._landing_zone.cardinals():
             self.reveal_tile(coord)
@@ -218,9 +226,9 @@ class MapData:
         The player cannot be added to the map if the deploy zone is occupied.
         """
         # Check if the landing zone is available
-        if self._get_actual_tile(self._landing_zone).icon != Icon.DEPLOY_ZONE:
+        if self[self._landing_zone].icon != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
-        self._set_actual_tile(self._landing_zone, Icon.PLAYER)
+        self[self._landing_zone] = Icon.PLAYER
         self.reveal_tile(self._landing_zone)
         for coord in self._landing_zone.cardinals():
             self.reveal_tile(coord)
@@ -232,13 +240,13 @@ class MapData:
             atron (Atron): The atron to move.
             dirc (str): The direction to move the atron.
         """
-        match self._get_actual_tile(new_location).icon:
+        match self[new_location].icon:
             case Icon.PLAYER | Icon.MINER | Icon.SCOUT:
                 pass  # Another Atron is already there
             case Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY:
                 # Atron can move here
                 self._clear_tile(atron.context.coord)
-                self._set_actual_tile(new_location, atron.icon)
+                self[new_location].icon = atron.icon
                 atron.context = self.build_context(new_location)
                 self.reveal_tile(new_location)
                 for coord in new_location.cardinals():
@@ -299,35 +307,15 @@ class MapData:
         """Adds a single mineral deposit to a random open spot in the map."""
         coordinates = self._get_rand_coords()
 
-        self._set_actual_tile(coordinates, Icon.MINERAL)
+        self[coordinates].icon = Icon.MINERAL
         self._total_minerals[coordinates] = randint(1, 9)
 
     def _add_acid(self) -> None:
         """Adds a single acid tile to a random open spot in the map."""
         coordinates = self._get_rand_coords()
 
-        self._set_actual_tile(coordinates, Icon.ACID)
+        self[coordinates].icon = Icon.ACID
         self._acid.append(coordinates)
-
-    def _get_actual_tile(self, coord: Coordinate) -> Tile:
-        """Get the actual tile at the given coordinates.
-
-        Args:
-            coord (Coordinate): The coordinates to look up.
-
-        Returns:
-            Tile: The tile at the given coordinates.
-        """
-        return self._all_tiles[coord.y][coord.x]
-
-    def _set_actual_tile(self, coord: Coordinate, icon: Icon) -> None:
-        """Set the actual icon of a tile at the given coordinates.
-
-        Args:
-            coord (Coordinate): The coordinates to set.
-            icon (Icon): The icon to set.
-        """
-        self._all_tiles[coord.y][coord.x].icon = icon
 
     def _get_rand_coords(self) -> Coordinate:
         """Get a random set of coordinates on the map.
@@ -338,7 +326,7 @@ class MapData:
         x_coords: int = self._width - 2
         y_coords: int = self._height - 2
         coordinates = Coordinate(0, 0)
-        while self._get_actual_tile(coordinates).icon != Icon.EMPTY:
+        while self[coordinates].icon != Icon.EMPTY:
             # Choose a random location on map excluding walls
             coordinates = Coordinate(
                 randint(1, x_coords),
@@ -353,11 +341,11 @@ class MapData:
             pos (Coordinate): The coordinates of the tile to update.
         """
         if pos == self._landing_zone:
-            self._set_actual_tile(pos, Icon.DEPLOY_ZONE)
+            self[pos] = Icon.DEPLOY_ZONE
         elif pos in self._acid:
-            self._set_actual_tile(pos, Icon.ACID)
+            self[pos] = Icon.ACID
         else:
-            self._set_actual_tile(pos, Icon.EMPTY)
+            self[pos] = Icon.EMPTY
 
     def __getitem__(self, key: Coordinate) -> Tile:
         """Get the tile with the specified coordinates from the map.
@@ -371,7 +359,16 @@ class MapData:
         Returns:
             Tile: The Tile within this map.
         """
-        return self._visible_tiles[key]
+        return self._all_tiles[key.y][key.x]
+
+    def __setitem__(self, coord: Coordinate, icon: Icon) -> None:
+        """Set the actual icon of a tile at the given coordinates.
+
+        Args:
+            coord (Coordinate): The coordinates to set.
+            icon (Icon): The icon to set.
+        """
+        self._all_tiles[coord.y][coord.x].icon = icon
 
     def __iter__(self) -> Iterator[Tile]:
         """Iterate over the visible tiles in this map.

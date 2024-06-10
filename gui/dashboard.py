@@ -48,7 +48,6 @@ class Dashboard(tkinter.Toplevel):
         if self._map_window:
             self._map_window.destroy()
         self._map_window = MapWindow(self, "Mining Map", map_data)
-        self._map_window.prepare_window()
         player.deploy_player(self._map_window)
         return self._map_window
 
@@ -90,11 +89,6 @@ class Dashboard(tkinter.Toplevel):
             tree_view.column(string_column, width=width, anchor="se")
             tree_view.heading(string_column, text=column)
         return tree_view
-
-    def refresh_map(self) -> None:
-        """Refresh the GUI Map with what it's physical map contains."""
-        if self._map_window:
-            self._map_window.refresh_window()
 
     def insert_action(self, action: str, tick: str) -> None:
         """Insert action and tick info into the action table.

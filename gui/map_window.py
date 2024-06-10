@@ -2,95 +2,41 @@
 
 from __future__ import annotations
 
-import itertools
-import tkinter
+import tkinter as tk
 from typing import TYPE_CHECKING
 
-from utils import Icon, Tile
+from .graphic_tile import GraphicTile
 
 if TYPE_CHECKING:
     from utils import MapData
 
 
-MAX_SIZE = 76
-
-
-class MapWindow(tkinter.Toplevel):
+class MapWindow(tk.Toplevel):
     """A window that displays the map of the game."""
 
     def __init__(
-        self, parent: tkinter.Toplevel, title: str, map_data: MapData
+        self, parent: tk.Toplevel, title: str, map_data: MapData
     ) -> None:
         """Initialize the GUI map.
 
         Args:
-            parent (tkinter.Toplevel): The parent window.
+            parent (tk.Toplevel): The parent window.
             title (str): The title of this window.
             physical_map (MapWindow): The actual data for the map window.
         """
         super().__init__(parent)
-        self._photo = tkinter.PhotoImage(file="icon.png")
+        self._photo = tk.PhotoImage(file="icon.png")
         self.wm_iconphoto(False, self._photo)
         self.geometry("300x300+0+0")
         self.minsize(600, 600)
         self.title(title)
         self._map_data = map_data
-        self._log = tkinter.Text(
-            self, width=100, height=100, state="normal", wrap="none"
-        )
-        self._log.pack()
+        self._map_frame = tk.Frame(self)
+        for tile in iter(self._map_data):
+            GraphicTile(self._map_frame, tile)
+        self._map_frame.pack()
 
     @property
     def map_data(self) -> MapData:
         """The map data for this window."""
         return self._map_data
-
-    def prepare_window(self) -> None:
-        """Prepare map by filling it with unknown characters."""
-        self._log.config(state="normal")
-        for x_axis, y_axis in itertools.product(
-            range(1, MAX_SIZE), range(1, MAX_SIZE)
-        ):
-            self._log.insert(f"{x_axis}.{y_axis}", Icon.UNKNOWN.unicode())
-            self._log.insert(tkinter.END, "\n")
-
-        for tile in iter(self._map_data):
-            tile.icon_var.trace_add(
-                "write", lambda *_: self._update_tile_icon(tile)
-            )
-            tile.discovered.trace_add(
-                "write", lambda *_: self._update_tile_fog(tile)
-            )
-        self._log.config(state="disabled")
-
-    def refresh_window(self) -> None:
-        """Refresh MapWindow with any updated coordinates."""
-        for tile in iter(self._map_data):
-            self._update_tile_icon(tile)
-
-    def _update_tile_icon(self, tile: Tile) -> None:
-        """Change the icon of a tile on the map.
-
-        new_tile (Tile) : The tile that should be updated.
-        """
-        self._log.config(state="normal")
-        coordinates = f"{tile.coordinate.y}.{tile.coordinate.x}"
-        self._log.delete(coordinates)
-        self._log.insert(coordinates, tile.icon.unicode())
-        self._log.config(state="disabled")
-
-    def _update_tile_fog(self, tile: Tile) -> None:
-        """Change the revealed status of a tile on the map.
-
-        new_tile (Tile) : The tile that should be updated.
-        """
-        self._log.config(state="normal")
-        if tile.discovered.get():
-            unicode_character = tile.icon.unicode()
-        else:
-            unicode_character = Icon.UNKNOWN.unicode()
-
-        coordinates = f"{tile.coordinate.y}.{tile.coordinate.x}"
-        self._log.delete(coordinates)
-        self._log.insert(coordinates, unicode_character)
-        self._log.config(state="disabled")
