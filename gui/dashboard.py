@@ -31,7 +31,7 @@ class Dashboard(tkinter.Toplevel):
         self.photo = tkinter.PhotoImage(file="icon.png")
         self.configure(bg="#2C292C")
 
-        self._map_window: MapWindow | None = None
+        self._map_window = MapWindow(self, "Mining Map")
 
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
@@ -44,19 +44,16 @@ class Dashboard(tkinter.Toplevel):
 
         Args:
             map_file (MapData): The map data.
+            player (Player): The player object.
         """
-        if self._map_window:
-            self._map_window.destroy()
-        self._map_window = MapWindow(self, "Mining Map", map_data)
-        player.deploy_player(self._map_window)
+        self._map_window.map_data = map_data
+        player.deploy(self._map_window)
         return self._map_window
 
     def unset_map(self) -> None:
         """Unset the mining map."""
         if self._map_window:
             self._map_window.unbind("<<PlayerMoved>>")
-            self._map_window.destroy()
-            self._map_window = None
 
     def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.

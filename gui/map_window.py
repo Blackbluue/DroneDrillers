@@ -14,15 +14,12 @@ if TYPE_CHECKING:
 class MapWindow(tk.Toplevel):
     """A window that displays the map of the game."""
 
-    def __init__(
-        self, parent: tk.Toplevel, title: str, map_data: MapData
-    ) -> None:
+    def __init__(self, parent: tk.Toplevel, title: str) -> None:
         """Initialize the GUI map.
 
         Args:
             parent (tk.Toplevel): The parent window.
             title (str): The title of this window.
-            physical_map (MapWindow): The actual data for the map window.
         """
         super().__init__(parent)
         self._photo = tk.PhotoImage(file="icon.png")
@@ -30,13 +27,19 @@ class MapWindow(tk.Toplevel):
         self.geometry("300x300+0+0")
         self.minsize(600, 600)
         self.title(title)
-        self._map_data = map_data
+        self._map_data: MapData | None = None
         self._map_frame = tk.Frame(self)
+
+    @property
+    def map_data(self) -> MapData | None:
+        """The map data for this window."""
+        return self._map_data
+
+    @map_data.setter
+    def map_data(self, map_data: MapData) -> None:
+        self._map_data = map_data
+        for widget in self._map_frame.winfo_children():
+            widget.destroy()
         for tile in iter(self._map_data):
             GraphicTile(self._map_frame, tile)
         self._map_frame.pack()
-
-    @property
-    def map_data(self) -> MapData:
-        """The map data for this window."""
-        return self._map_data
