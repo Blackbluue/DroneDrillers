@@ -103,7 +103,7 @@ class MainController(tk.Tk):
         )
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
-        time.sleep(self._refresh_delay)
+        # time.sleep(self._refresh_delay)
         self.ticks.counter.count(-1)
 
     def _reset_map(self) -> None:
