@@ -21,13 +21,6 @@ def get_args() -> argparse.Namespace:
         nargs="?",
         help="Directory to find map files",
     )
-    parser.add_argument(
-        "-r",
-        "--refresh",
-        type=float,
-        default=0.1,
-        help="Refresh delay in seconds (default: %(default)s)",
-    )
     args = parser.parse_args()
     if args.map_directory and not os.path.isdir(args.map_directory):
         parser.error(f"Map directory {args.map_directory} does not exist")
@@ -39,7 +32,7 @@ def main() -> None:
     args = get_args()
     map_directory: str | None = args.map_directory
     print(f"Starting game with map directory: {map_directory}")
-    MainController(args.refresh, map_directory).mainloop()
+    MainController(map_directory).mainloop()
 
 
 if __name__ == "__main__":

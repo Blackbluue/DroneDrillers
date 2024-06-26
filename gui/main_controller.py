@@ -5,7 +5,6 @@ from __future__ import annotations
 import os
 import random
 import sys
-import time
 import tkinter as tk
 
 from utils import MapData
@@ -21,16 +20,14 @@ DEFAULT_REFINED = 100
 class MainController(tk.Tk):
     """Main game controller."""
 
-    def __init__(self, refresh_delay: float, map_dir: str | None) -> None:
+    def __init__(self, map_dir: str | None) -> None:
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
         self.geometry("400x150+0+0")
-        self._initialize_values(refresh_delay, map_dir)
+        self._initialize_values(map_dir)
 
-    def _initialize_values(
-        self, refresh_delay: float, map_dir: str | None
-    ) -> None:
+    def _initialize_values(self, map_dir: str | None) -> None:
         """Initialize game values from the GUI."""
         self.ticks = LabeledCounter(
             self, "Ticks:", value=DEFAULT_TICKS, max_value=DEFAULT_TICKS
@@ -41,7 +38,6 @@ class MainController(tk.Tk):
             value=DEFAULT_REFINED,
             max_value=DEFAULT_REFINED,
         )
-        self._refresh_delay = refresh_delay
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
@@ -103,7 +99,6 @@ class MainController(tk.Tk):
         )
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
-        # time.sleep(self._refresh_delay)
         self.ticks.counter.count(-1)
 
     def _reset_map(self) -> None:
