@@ -80,6 +80,8 @@ class Player(Atron):
             case _:
                 direction = Directions.CENTER
         if direction is not Directions.CENTER:
-            new_location = self.context.coord.translate_one(direction)
+            new_location = self.context.center.coordinate.translate_one(
+                direction
+            )
             self._map_window.map_data.move_to(self, new_location)
         self._map_window.event_generate("<<PlayerMoved>>")

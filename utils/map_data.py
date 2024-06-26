@@ -149,11 +149,11 @@ class MapData:
         """
         cardinals = [
             *map(
-                lambda coord: self[coord].icon,
+                lambda coord: self[coord],
                 location.cardinals(),
             )
         ]
-        return Context(location, *cardinals)
+        return Context(self[location], *cardinals)
 
     def get_unexplored_tiles(self) -> Sequence[Tile]:
         """Return a list of all unexplored tiles on the map.
@@ -189,7 +189,7 @@ class MapData:
             int: The mined mineral count.
         """
         payload = drone.undeploy()
-        self._clear_tile(drone.context.coord)
+        self._clear_tile(drone.context.center.coordinate)
         return payload
 
     def reveal_tile(self, coord: Coordinate) -> None:
@@ -248,16 +248,20 @@ class MapData:
         for drone in drones:
             for _ in range(drone.moves):
                 # acid damage is applied before movement
-                if drone.context.coord in self._acid:
+                if drone.context.center.coordinate in self._acid:
                     drone.health.count(Icon.ACID.health_cost())
                 if drone.health.get() <= 0:
-                    self._clear_tile(drone.context.coord)
+                    self._clear_tile(drone.context.center.coordinate)
                     drone.undeploy()  # mined minerals lost
                     break  # atron is dead move on to next
 
                 direction = Directions(drone.action(drone.context))
                 if direction != Directions.CENTER:
-                    new_location = drone.context.coord.translate_one(direction)
+                    new_location = (
+                        drone.context.center.coordinate.translate_one(
+                            direction
+                        )
+                    )
                     self.move_to(drone, new_location)
 
     def _create_box(self, width: int, height: int) -> None:
@@ -324,7 +328,7 @@ class MapData:
             atron (Atron): The atron to move.
             new_location (Coordinate): The new location to move the atron to.
         """
-        self._clear_tile(atron.context.coord)
+        self._clear_tile(atron.context.center.coordinate)
         self[new_location].icon = atron.icon
         atron.context = self.build_context(new_location)
         self.reveal_tile(new_location)

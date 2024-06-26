@@ -5,12 +5,14 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from utils import Context, Coordinate, Counter, Icon
+from utils import Context, Coordinate, Counter, Icon, Tile
 
 if TYPE_CHECKING:
     from gui.map_window import MapWindow
 
-DEFAULT_CONTEXT = Context(Coordinate(-1, -1), *[Icon.UNKNOWN] * 4)
+DEFAULT_CONTEXT = Context(
+    *[Tile(Coordinate(-1, -1), Icon.UNKNOWN)] * 5,
+)
 
 
 class Atron(ABC):

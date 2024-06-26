@@ -2,8 +2,7 @@
 
 from typing import NamedTuple
 
-from .coordinate import Coordinate
-from .icon import Icon
+from .tile import Tile
 
 
 class Context(NamedTuple):
@@ -22,8 +21,8 @@ class Context(NamedTuple):
             Defaults to Icon.UNKNOWN.
     """
 
-    coord: Coordinate = Coordinate(-1, -1)
-    north: Icon | None = Icon.UNKNOWN
-    south: Icon | None = Icon.UNKNOWN
-    east: Icon | None = Icon.UNKNOWN
-    west: Icon | None = Icon.UNKNOWN
+    center: Tile
+    north: Tile
+    south: Tile
+    east: Tile
+    west: Tile
