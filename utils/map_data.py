@@ -220,31 +220,28 @@ class MapData:
             self.reveal_tile(coord)
 
     def move_to(self, atron: Atron, new_location: Coordinate) -> None:
-        """Move the atron in the given direction.
+        """Move the atron in the given location.
+
+        Checks if the location is traversable before moving. Also applies any
+        other side effects from attempting to move to this tile.
 
         Args:
             atron (Atron): The atron to move.
-            dirc (str): The direction to move the atron.
+            new_location (Coordinate): The new location to move the atron to.
         """
-        match self[new_location].icon:
-            case Icon.PLAYER | Icon.MINER | Icon.SCOUT:
-                pass  # Another Atron is already there
-            case Icon.DEPLOY_ZONE | Icon.ACID | Icon.EMPTY:
-                # Atron can move here
-                self._clear_tile(atron.context.coord)
-                self[new_location].icon = atron.icon
-                atron.context = self.build_context(new_location)
-                self.reveal_tile(new_location)
-                for coord in new_location.cardinals():
-                    self.reveal_tile(coord)
-            case Icon.WALL:  # Atron hits a wall
-                atron.health.count(Icon.WALL.health_cost())
-            case Icon.MINERAL:  # Atron mines a mineral
-                self._total_minerals[new_location] -= 1
-                atron.payload.count(1)
-                if self._total_minerals[new_location] <= 0:
-                    self._clear_tile(new_location)
-                    del self._total_minerals[new_location]
+        new_icon = self[new_location].icon
+
+        if new_icon.traversable():
+            return self._move_atron(atron, new_location)
+
+        if health_adjust := new_icon.health_cost():
+            atron.health.count(health_adjust)
+        if new_icon == Icon.MINERAL:
+            self._total_minerals[new_location] -= 1
+            atron.payload.count(1)
+            if self._total_minerals[new_location] <= 0:
+                self._clear_tile(new_location)
+                del self._total_minerals[new_location]
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
@@ -319,6 +316,20 @@ class MapData:
                 randint(1, y_coords),
             )
         return coordinates
+
+    def _move_atron(self, atron: Atron, new_location: Coordinate) -> None:
+        """Move the atron to the new traversable location.
+
+        Args:
+            atron (Atron): The atron to move.
+            new_location (Coordinate): The new location to move the atron to.
+        """
+        self._clear_tile(atron.context.coord)
+        self[new_location].icon = atron.icon
+        atron.context = self.build_context(new_location)
+        self.reveal_tile(new_location)
+        for coord in new_location.cardinals():
+            self.reveal_tile(coord)
 
     def _clear_tile(self, pos: Coordinate) -> None:
         """Clear the tile at the given coordinates.
