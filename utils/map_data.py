@@ -238,7 +238,7 @@ class MapData:
                 for coord in new_location.cardinals():
                     self.reveal_tile(coord)
             case Icon.WALL:  # Atron hits a wall
-                atron.health.count(-Icon.WALL.health_cost())
+                atron.health.count(Icon.WALL.health_cost())
             case Icon.MINERAL:  # Atron mines a mineral
                 self._total_minerals[new_location] -= 1
                 atron.payload.count(1)
@@ -252,7 +252,7 @@ class MapData:
             for _ in range(drone.moves):
                 # acid damage is applied before movement
                 if drone.context.coord in self._acid:
-                    drone.health.count(-Icon.ACID.health_cost())
+                    drone.health.count(Icon.ACID.health_cost())
                 if drone.health.get() <= 0:
                     self._clear_tile(drone.context.coord)
                     drone.undeploy()  # mined minerals lost

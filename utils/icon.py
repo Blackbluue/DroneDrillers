@@ -29,16 +29,18 @@ class Icon(Enum):
     def health_cost(self) -> int:
         """Return the health cost for traversing over this tile.
 
-        If the tile is not traversable, a value of -1 will be returned.
+        Any tile that causes damage for traveling over it will return a
+        negative number representing the health cost. Healing tiles will return
+        a positive number representing the health cost.
 
         Returns:
-            int: A non-negative number representing the health cost, or -1.
+            int: A number representing the health cost.
         """
         match self:
             case Icon.WALL:
-                return 1
+                return -1
             case Icon.ACID:
-                return 3
+                return -3
             case _:
                 return 0
 
