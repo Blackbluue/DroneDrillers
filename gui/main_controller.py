@@ -106,8 +106,7 @@ class MainController(tk.Tk):
         if self._tick_tracer:
             self.ticks.counter.trace_remove("write", self._tick_tracer)
             self._tick_tracer = ""
-        if self._game_data.player.deployed:
-            self._game_data.player.undeploy()
+        self._game_data.undeploy_player()
         self._game_data.current_map = None
 
     def _finish_mining(self, var: str, index: str, mode: str) -> None:
@@ -118,7 +117,8 @@ class MainController(tk.Tk):
             index (str): The index of the variable.
             mode (str): The mode of the variable.
         """
-        total_mined = 0  # TODO: this should be maintained by the game data
         if self.ticks.counter.get() == 0:
             self._reset_map()
-            print("Total mined:", total_mined, file=sys.stderr)
+            print(
+                "Total mined:", self._game_data.total_refined, file=sys.stderr
+            )

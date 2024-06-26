@@ -21,6 +21,7 @@ class GameData:
         self._player = Player()
         self._overlord = Overlord()
         self._drones = self._overlord.drones
+        self._total_refined = 0
 
     @property
     def player(self) -> Player:
@@ -51,3 +52,13 @@ class GameData:
     def drones(self) -> Mapping[int, Drone]:
         """The drones."""
         return self._drones
+
+    @property
+    def total_refined(self) -> int:
+        """The total refined minerals."""
+        return self._total_refined
+
+    def undeploy_player(self) -> None:
+        """Retrieve the player from the map."""
+        if self._player.deployed:
+            self._total_refined += self._player.undeploy()
