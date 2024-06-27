@@ -45,6 +45,7 @@ class MainController(tk.Tk):
         self.refined.pack()
         self._start_button.pack()
         self._tick_tracer = ""
+        self._health_tracer = ""
 
         self._game_data = GameData()
         self._dashboard = Dashboard(self, self._game_data.player)
@@ -64,6 +65,9 @@ class MainController(tk.Tk):
         self._game_data.current_map = mining_map
         self._dashboard.set_map(mining_map).bind(
             "<<PlayerMoved>>", self._process_tick
+        )
+        self._health_tracer = self._game_data.player.health.trace_add(
+            "write", self._finish_mining
         )
 
         self.ticks.counter.reset()
@@ -86,7 +90,7 @@ class MainController(tk.Tk):
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
-                mining_map.remove_drone(overlord.drones[drone_id])
+                mining_map.remove_atron(overlord.drones[drone_id])
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
@@ -108,6 +112,9 @@ class MainController(tk.Tk):
         if self._tick_tracer:
             self.ticks.counter.trace_remove("write", self._tick_tracer)
             self._tick_tracer = ""
+        if self._health_tracer:
+            self.ticks.counter.trace_remove("write", self._health_tracer)
+            self._health_tracer = ""
         self._game_data.undeploy_player()
         self._game_data.current_map = None
 
@@ -119,7 +126,8 @@ class MainController(tk.Tk):
             index (str): The index of the variable.
             mode (str): The mode of the variable.
         """
-        if self.ticks.counter.get() == 0:
+        player = self._game_data.player
+        if self.ticks.counter.get() == 0 or player.health.get() <= 0:
             self._reset_map()
             print(
                 "Total mined:", self._game_data.total_refined, file=sys.stderr

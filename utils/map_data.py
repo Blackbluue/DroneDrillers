@@ -179,18 +179,17 @@ class MapData:
             tiles.extend(list(filter(lambda tile: tile.discovered.get(), row)))
         return tiles
 
-    def remove_drone(self, drone: Drone) -> int:
-        """Removes drone from map and returns the mined minerals.
+    def remove_atron(self, atron: Atron) -> int:
+        """Removes atron from map and returns the mined minerals.
 
         Args:
-            drone (Drone): The drone to be removed.
+            atron (Atron): The atron to be removed.
 
         Returns:
             int: The mined mineral count.
         """
-        payload = drone.undeploy()
-        self._clear_tile(drone.context.center.coordinate)
-        return payload
+        self._clear_tile(atron.context.center.coordinate)
+        return atron.undeploy()
 
     def reveal_tile(self, coord: Coordinate) -> None:
         """Reveal a tile on the map.
