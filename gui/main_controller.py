@@ -41,6 +41,8 @@ class MainController(tk.Tk):
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
+        self.ticks.pack()
+        self.refined.pack()
         self._start_button.pack()
         self._tick_tracer = ""
 

@@ -49,8 +49,6 @@ class LabeledCounter(tk.Frame):
         self._counter_label = tk.Label(self, textvariable=self._counter)
         self._counter_label.pack(side=tk.RIGHT)
 
-        self.pack()
-
     @property
     def counter(self) -> Counter:
         """Return the counter."""
