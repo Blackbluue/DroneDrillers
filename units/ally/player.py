@@ -84,4 +84,6 @@ class Player(Atron):
                 direction
             )
             self._map_window.map_data.move_to(self, new_location)
+        if health_adjust := self.context.center.terrain.health_cost():
+            self.health.count(health_adjust)
         self._map_window.event_generate("<<PlayerMoved>>")
