@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 import tkinter as tk
-from typing import TYPE_CHECKING
 
 from utils import Counter
-
-if TYPE_CHECKING:
-    from .main_controller import MainController
 
 
 class LabeledCounter(tk.Frame):
@@ -16,7 +12,7 @@ class LabeledCounter(tk.Frame):
 
     def __init__(
         self,
-        owner: MainController,
+        owner: tk.Misc,
         label: str,
         counter: Counter | None = None,
         value: int = 0,
@@ -25,7 +21,7 @@ class LabeledCounter(tk.Frame):
         """Create a labeled counter.
 
         Args:
-            owner (MainController): The owner of the counter.
+            owner (tk.Misc): The owner of the counter.
             label (str): The label to put on the counter.
             counter (Counter, optional): The counter to use.
                 Defaults to None
