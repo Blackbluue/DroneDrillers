@@ -5,14 +5,10 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from utils import Context, Coordinate, Counter, Icon, Tile
+from utils import Context, Counter, Icon
 
 if TYPE_CHECKING:
     from gui.map_window import MapWindow
-
-DEFAULT_CONTEXT = Context(
-    *[Tile(Coordinate(-1, -1), Icon.UNKNOWN)] * 5,
-)
 
 
 class Atron(ABC):
@@ -34,7 +30,7 @@ class Atron(ABC):
             raise ValueError("Atron health must be 1 or greater")
         self._health = Counter(value=health, max_value=health)
         self._payload = Counter(value=0, max_value=capacity)
-        self._context: Context = DEFAULT_CONTEXT
+        self._context: Context | None = None
 
     @property
     def health(self) -> Counter:
@@ -61,7 +57,7 @@ class Atron(ABC):
         Returns:
             bool: True if deployed, False otherwise.
         """
-        return self._context != DEFAULT_CONTEXT
+        return self._context != None
 
     @property
     def context(self) -> Context:
@@ -70,6 +66,8 @@ class Atron(ABC):
         Returns:
             Context: The context.
         """
+        if self._context is None:
+            raise ValueError("Context not set")
         return self._context
 
     @context.setter
@@ -105,7 +103,7 @@ class Atron(ABC):
         """
         if not self.deployed:
             raise ValueError("Unit not deployed")
-        self._context = DEFAULT_CONTEXT
+        self._context = None
         payload = self._payload.get()
         self._payload.reset()
         return payload

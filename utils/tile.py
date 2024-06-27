@@ -25,7 +25,7 @@ class Tile:
             icon (Icon): The icon on this tile.
         """
         self._coordinate = coordinate
-        self._icon_var: IconVar = IconVar(value=icon)
+        self._icon_var = IconVar(value=icon)
         self._discovered = BooleanVar(value=False)
         self._occupation: Drone | None = None
 
