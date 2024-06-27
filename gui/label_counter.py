@@ -18,6 +18,7 @@ class LabeledCounter(tk.Frame):
         self,
         owner: MainController,
         label: str,
+        counter: Counter | None = None,
         value: int = 0,
         max_value: int = 0,
     ) -> None:
@@ -26,11 +27,21 @@ class LabeledCounter(tk.Frame):
         Args:
             owner (MainController): The owner of the counter.
             label (str): The label to put on the counter.
-            default (int): The default value for the counter.
+            counter (Counter, optional): The counter to use.
+                Defaults to None
+            value (int, optional): The initial value of the counter.
+                Defaults to 0.
+            max_value (int, optional): The maximum value of the counter.
+                Defaults to 0.
         """
         super().__init__(owner)
 
-        self._counter = Counter(master=self, value=value, max_value=max_value)
+        if counter:
+            self._counter = counter
+        else:
+            self._counter = Counter(
+                master=self, value=value, max_value=max_value
+            )
 
         self._text_label = tk.Label(self, text=f"{label}")
         self._text_label.pack(side=tk.LEFT)
