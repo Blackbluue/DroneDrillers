@@ -210,11 +210,11 @@ class MapData:
         Args:
             atron (Atron): The atron to add to the map.
         """
-        if self[self._landing_zone].icon != Icon.DEPLOY_ZONE:
+        if self[self._landing_zone].surface != Icon.DEPLOY_ZONE:
             raise ValueError("Landing zone is occupied")
 
         atron.context = self.build_context(self._landing_zone)
-        self[self._landing_zone] = atron.icon
+        self[self._landing_zone].occupied_drone = atron
         self.reveal_tile(self._landing_zone)
         for coord in self._landing_zone.cardinals():
             self.reveal_tile(coord)
@@ -229,7 +229,7 @@ class MapData:
             atron (Atron): The atron to move.
             new_location (Coordinate): The new location to move the atron to.
         """
-        new_icon = self[new_location].icon
+        new_icon = self[new_location].surface
 
         if new_icon.traversable():
             return self._move_atron(atron, new_location)
@@ -294,14 +294,14 @@ class MapData:
         """Adds a single mineral deposit to a random open spot in the map."""
         coordinates = self._get_rand_coords()
 
-        self[coordinates].icon = Icon.MINERAL
+        self[coordinates] = Icon.MINERAL
         self._total_minerals[coordinates] = randint(1, 9)
 
     def _add_acid(self) -> None:
         """Adds a single acid tile to a random open spot in the map."""
         coordinates = self._get_rand_coords()
 
-        self[coordinates].icon = Icon.ACID
+        self[coordinates] = Icon.ACID
         self._acid.append(coordinates)
 
     def _get_rand_coords(self) -> Coordinate:
@@ -313,7 +313,7 @@ class MapData:
         x_coords: int = self._width - 2
         y_coords: int = self._height - 2
         coordinates = Coordinate(0, 0)
-        while self[coordinates].icon != Icon.EMPTY:
+        while self[coordinates].surface != Icon.EMPTY:
             # Choose a random location on map excluding walls
             coordinates = Coordinate(
                 randint(1, x_coords),
@@ -328,8 +328,9 @@ class MapData:
             atron (Atron): The atron to move.
             new_location (Coordinate): The new location to move the atron to.
         """
+        self[atron.context.center.coordinate].occupied_drone = None
         self._clear_tile(atron.context.center.coordinate)
-        self[new_location].icon = atron.icon
+        self[new_location].occupied_drone = atron
         atron.context = self.build_context(new_location)
         self.reveal_tile(new_location)
         for coord in new_location.cardinals():
@@ -369,7 +370,7 @@ class MapData:
             coord (Coordinate): The coordinates to set.
             icon (Icon): The icon to set.
         """
-        self._all_tiles[coord.y][coord.x].icon = icon
+        self._all_tiles[coord.y][coord.x].surface = icon
 
     def __iter__(self) -> Iterator[Tile]:
         """Iterate over the visible tiles in this map.
@@ -389,6 +390,6 @@ class MapData:
             str: The string representation of this object.
         """
         return "\n".join(
-            "".join([tile.icon.value for tile in row if tile.icon])
+            "".join([tile.surface.value for tile in row if tile.surface])
             for row in self._all_tiles
         )

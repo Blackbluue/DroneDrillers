@@ -29,7 +29,7 @@ class GraphicTile(Label):
         self._tile = tile
         self._visible_icon = IconVar(master=self)
         self["textvariable"] = self._visible_icon
-        tile.icon_var.trace_add("write", self._update_tile)
+        tile.surface_var.trace_add("write", self._update_tile)
         tile.discovered.trace_add("write", self._update_tile)
         self["width"] = 1
         self["relief"] = "raised"
@@ -38,7 +38,7 @@ class GraphicTile(Label):
     def _update_tile(self, *_) -> None:
         """Change the tile icon."""
         if self._tile.discovered.get():
-            self._visible_icon.set(self._tile.icon)
+            self._visible_icon.set(self._tile.surface)
             self["bg"] = "white"
         else:
             self._visible_icon.set(Icon.UNKNOWN)

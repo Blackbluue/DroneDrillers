@@ -181,11 +181,11 @@ class Overlord(Atron):
             ) is None:
                 # tile not in map
                 continue
-            if neighbor.icon and neighbor.icon not in _NODE_WEIGHTS:
+            if neighbor.surface and neighbor.surface not in _NODE_WEIGHTS:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((_NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
+            pqueue.put((_NODE_WEIGHTS[neighbor.surface], neighbor.coordinate))
 
     @staticmethod
     def _build_final_path(
