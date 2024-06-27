@@ -47,7 +47,7 @@ class MainController(tk.Tk):
         self._tick_tracer = ""
 
         self._game_data = GameData()
-        self._dashboard = Dashboard(self)
+        self._dashboard = Dashboard(self, self._game_data.player)
         self._map_dir = map_dir
 
     def _start_button_handler(self) -> None:
@@ -62,7 +62,7 @@ class MainController(tk.Tk):
         mining_map = MapData(map_file)
 
         self._game_data.current_map = mining_map
-        self._dashboard.set_map(mining_map, self._game_data.player).bind(
+        self._dashboard.set_map(mining_map).bind(
             "<<PlayerMoved>>", self._process_tick
         )
 

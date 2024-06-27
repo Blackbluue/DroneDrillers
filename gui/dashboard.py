@@ -8,12 +8,13 @@ from typing import TYPE_CHECKING
 
 from utils.icon import Icon
 
+from .label_counter import LabeledCounter
 from .map_window import MapWindow
 
 if TYPE_CHECKING:
-    from typing import Any, Dict, Iterable, Mapping
+    from collections.abc import Iterable, Mapping
 
-    from units.ally import Player
+    from units.ally import Atron, Player
     from units.ally.drones import Drone
     from utils import MapData
 
@@ -21,7 +22,7 @@ if TYPE_CHECKING:
 class Dashboard(tkinter.Toplevel):
     """Display information on the drones and actions in the game."""
 
-    def __init__(self, parent: tkinter.Tk) -> None:
+    def __init__(self, parent: tkinter.Tk, player: Player) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Args:
@@ -37,17 +38,24 @@ class Dashboard(tkinter.Toplevel):
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
         self.legend_insertion()
+        self._player = player
+        self._player_health = LabeledCounter(
+            self,
+            "Player Health:",
+            counter=player.health,
+        )
+        self._player_health.grid(row=0, column=0, columnspan=2)
         self.title("Overlord's Dashboard")
 
-    def set_map(self, map_data: MapData, player: Player) -> MapWindow:
+    def set_map(self, map_data: MapData) -> MapWindow:
         """Set the mining map.
 
         Args:
             map_file (MapData): The map data.
-            player (Player): The player object.
         """
         self._map_window.map_data = map_data
-        player.deploy(self._map_window)
+        self._player.deploy(self._map_window)
+        self._player_health.counter.reset()
         return self._map_window
 
     def unset_map(self) -> None:
@@ -55,13 +63,13 @@ class Dashboard(tkinter.Toplevel):
         if self._map_window:
             self._map_window.unbind("<<PlayerMoved>>")
 
-    def _make_tree(self, column_dictionary: Dict[str, int]) -> ttk.Treeview:
+    def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
         Dashboards typically serve as spreadsheets in the gui.
         https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         Args:
-            column_dictionary (Dict[str, int]): Contains dictionaries and
+            labels (Mapping[str, int]): Contains dictionaries and
                 width values for each column.
         """
         style = ttk.Style()
@@ -74,34 +82,16 @@ class Dashboard(tkinter.Toplevel):
         tree_view = ttk.Treeview(self, selectmode="browse")
 
         # Defining number of columns
-        tree_view["columns"] = tuple(column_dictionary)
+        tree_view["columns"] = tuple(labels)
 
         # Defining heading
         tree_view["show"] = "headings"
 
-        for column_count, (column, width) in enumerate(
-            column_dictionary.items()
-        ):
+        for column_count, (column, width) in enumerate(labels.items()):
             string_column = str(column_count)
             tree_view.column(string_column, width=width, anchor="se")
             tree_view.heading(string_column, text=column)
         return tree_view
-
-    def insert_action(self, action: str, tick: str) -> None:
-        """Insert action and tick info into the action table.
-
-        Args:
-            action (str): String that represents the action happening.
-
-            tick (str): String that represents the tick in which the
-                action is taking place.
-        """
-        self.turn_tree.insert(
-            "",
-            "end",
-            text="Listbox",
-            values=(tick, action),
-        )
 
     def legend_insertion(self) -> None:
         """Prepare the legend in the dashboard."""
@@ -118,35 +108,26 @@ class Dashboard(tkinter.Toplevel):
         # https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         legend_labels = {"Map Symbol": 180, "Meaning": 180}
 
-        action_labels = {"Action": 180, "Tick": 180}
-
         drone_labels = {
             "Drone ID": 180,
             "Drone Type": 120,
-            "State": 120,
             "Health": 90,
             "Capacity": 90,
-            "Moves": 90,
         }
         padding = (20, 20)
         self.legend_tree = self._make_tree(legend_labels)
-        self.legend_tree.grid(row=0, column=0, padx=padding, pady=padding)
-        self.turn_tree = self._make_tree(action_labels)
-        self.turn_tree.grid(row=0, column=1, padx=padding, pady=padding)
+        self.legend_tree.grid(row=1, column=0, padx=padding, pady=padding)
         self.drone_tree = self._make_tree(drone_labels)
-        self.drone_tree.grid(
-            row=1, column=0, columnspan=2, padx=padding, pady=padding
-        )
+        self.drone_tree.grid(row=1, column=1, padx=padding, pady=padding)
 
-    def add_drone_to_tree(self, new_drone: Drone) -> None:
+    def add_atron_to_tree(self, new_drone: Atron) -> None:
         """Add a drone to the drone tree in the gui.
 
         Args:
-            new_drone (Drone) : this is the drone we are adding to the tree in
+            new_drone (Atron) : This is the atron we are adding to the tree in
                 the dashboard.
         """
         type_of_drone = type(new_drone).__name__
-        status_of_drone = new_drone.state.name
         self.drone_tree.insert(
             "",
             "end",
@@ -154,10 +135,8 @@ class Dashboard(tkinter.Toplevel):
             values=(
                 id(new_drone),
                 type_of_drone,
-                status_of_drone,
                 new_drone.health,
                 new_drone.payload.get(),
-                new_drone.moves,
             ),
         )
 
@@ -170,4 +149,4 @@ class Dashboard(tkinter.Toplevel):
         for entry in self.drone_tree.get_children():
             self.drone_tree.delete(entry)
         for drone in drones:
-            self.add_drone_to_tree(drone)
+            self.add_atron_to_tree(drone)
