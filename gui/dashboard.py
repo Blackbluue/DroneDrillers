@@ -6,8 +6,6 @@ import tkinter as tk
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
-from utils.icon import Icon
-
 from .label_counter import LabeledCounter
 
 if TYPE_CHECKING:
@@ -51,10 +49,10 @@ class Dashboard(tk.Frame):
         }
         self._drone_tree = self._make_tree(drone_labels)
 
+        self._drone_tree.pack(side="left")
         self._player_health.pack()
         self._ticks.pack()
         self._refined.pack()
-        self._drone_tree.pack(side="left")
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
