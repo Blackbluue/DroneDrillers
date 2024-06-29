@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from units.ally import Overlord, Player
+from utils.counter import Counter
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -12,6 +13,8 @@ if TYPE_CHECKING:
 
     from units.ally.drones import Drone
     from utils import MapData
+
+STARTING_REFINED = 100
 
 
 class GameData:
@@ -22,7 +25,7 @@ class GameData:
         self._player = Player(root_window)
         self._overlord = Overlord()
         self._drones = self._overlord.drones
-        self._total_refined = 0
+        self._total_refined = Counter(value=STARTING_REFINED)
 
     @property
     def player(self) -> Player:
@@ -58,11 +61,11 @@ class GameData:
         return self._drones
 
     @property
-    def total_refined(self) -> int:
+    def total_refined(self) -> Counter:
         """The total refined minerals."""
         return self._total_refined
 
     def undeploy_player(self) -> None:
         """Retrieve the player from the map."""
         if self._player.deployed:
-            self._total_refined += self._player.undeploy()
+            self._total_refined.count(self._player.undeploy())

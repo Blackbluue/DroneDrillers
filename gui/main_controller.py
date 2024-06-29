@@ -30,9 +30,6 @@ class MainController(tk.Tk):
     def _initialize_values(self, map_dir: str | None) -> None:
         """Initialize game values from the GUI."""
         self._ticks = Counter(value=DEFAULT_TICKS, max_value=DEFAULT_TICKS)
-        self._refined = Counter(
-            value=DEFAULT_REFINED, max_value=DEFAULT_REFINED
-        )
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
@@ -41,7 +38,10 @@ class MainController(tk.Tk):
         self._game_data = GameData(self)
         self._map_dir: str | None = map_dir
         self._dashboard = Dashboard(
-            self, self._game_data.player.health, self._ticks, self._refined
+            self,
+            self._game_data.player.health,
+            self._ticks,
+            self._game_data.total_refined,
         )
         self._map_frame = tk.Frame(self)
 
@@ -60,7 +60,6 @@ class MainController(tk.Tk):
         self._set_new_map()
         self._ticks.reset()
         self._tick_tracer = self._ticks.trace_add("write", self._finish_mining)
-        self._refined.reset()
 
     def _process_tick(self, event: tk.Event) -> None:
         """Process a tick of the game.
@@ -108,9 +107,6 @@ class MainController(tk.Tk):
             self._tick_tracer = ""
             self._game_data.undeploy_player()
             self._game_data.current_map = None
-            print(
-                "Total mined:", self._game_data.total_refined, file=sys.stderr
-            )
 
     def _set_new_map(self) -> None:
         """Set the mining map."""
