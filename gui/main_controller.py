@@ -25,7 +25,6 @@ class MainController(tk.Tk):
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
-        # self.geometry("400x150+0+0")
         self._initialize_values(map_dir)
 
     def _initialize_values(self, map_dir: str | None) -> None:
