@@ -18,7 +18,6 @@ if TYPE_CHECKING:
         MutableSet,
     )
 
-    from gui.map_window import MapWindow
     from utils import Coordinate, MapData
 
 DEFAULT_HEALTH = 10
@@ -62,14 +61,14 @@ class Overlord(Atron):
         """The icon of this drone type."""
         return Icon.DEPLOY_ZONE
 
-    def deploy(self, map_window: MapWindow) -> None:
+    def deploy(self, map_data: MapData) -> None:
         """Deploy the overlord on the map.
 
         Args:
-            map_window (MapWindow): The map window to deploy the overlord on.
+            map_data (MapData): The map to deploy the overlord on.
         """
-        super().deploy(map_window)
-        self._mining_map = map_window.map_data
+        super().deploy(map_data)
+        self._mining_map = map_data
 
     def order_drones(self) -> str:
         """Give orders to the drones.
