@@ -43,10 +43,18 @@ class Dashboard(tk.Frame):
             self, "Refined Minerals:", counter=minerals
         )
 
-        self._prep_dashboard_trees()
+        drone_labels = {
+            "Drone ID": 180,
+            "Drone Type": 120,
+            "Health": 90,
+            "Capacity": 90,
+        }
+        self._drone_tree = self._make_tree(drone_labels)
+
         self._player_health.pack()
         self._ticks.pack()
         self._refined.pack()
+        self._drone_tree.pack(side="left")
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
@@ -75,17 +83,6 @@ class Dashboard(tk.Frame):
             tree_view.heading(string_column, text=column)
         return tree_view
 
-    def _prep_dashboard_trees(self) -> None:
-        """Prepare the three tree views in the dashboard."""
-        drone_labels = {
-            "Drone ID": 180,
-            "Drone Type": 120,
-            "Health": 90,
-            "Capacity": 90,
-        }
-        self.drone_tree = self._make_tree(drone_labels)
-        self.drone_tree.pack(side="left")
-
     def add_atron_to_tree(self, new_drone: Atron) -> None:
         """Add a drone to the drone tree in the gui.
 
@@ -94,7 +91,7 @@ class Dashboard(tk.Frame):
                 the dashboard.
         """
         type_of_drone = type(new_drone).__name__
-        self.drone_tree.insert(
+        self._drone_tree.insert(
             "",
             "end",
             text="Listbox",
@@ -112,7 +109,7 @@ class Dashboard(tk.Frame):
         Args:
             drones (Iterable[Drone]) : The list of drones.
         """
-        for entry in self.drone_tree.get_children():
-            self.drone_tree.delete(entry)
+        for entry in self._drone_tree.get_children():
+            self._drone_tree.delete(entry)
         for drone in drones:
             self.add_atron_to_tree(drone)
