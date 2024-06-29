@@ -52,15 +52,19 @@ class Player(Atron):
     def undeploy(self) -> int:
         """Retrieve the player from the map."""
         payload = super().undeploy()
-        self._window.unbind("<Left>", self._l_bind)
-        self._window.unbind("<Right>", self._r_bind)
-        self._window.unbind("<Up>", self._u_bind)
-        self._window.unbind("<Down>", self._d_bind)
+        if self._l_bind is not None:
+            self._window.unbind("<Left>", self._l_bind)
+            self._l_bind = None
+        if self._r_bind is not None:
+            self._window.unbind("<Right>", self._r_bind)
+            self._r_bind = None
+        if self._u_bind is not None:
+            self._window.unbind("<Up>", self._u_bind)
+            self._u_bind = None
+        if self._d_bind is not None:
+            self._window.unbind("<Down>", self._d_bind)
+            self._d_bind = None
         self._map_data = None
-        self._l_bind = None
-        self._r_bind = None
-        self._u_bind = None
-        self._d_bind = None
         return payload
 
     def move_player(self, event: Event) -> None:
