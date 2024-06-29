@@ -47,9 +47,10 @@ class MainController(tk.Tk):
         self._tick_tracer = ""
         self._health_tracer = ""
 
-        self._game_data = GameData()
+        self._game_data = GameData(self)
         self._dashboard = Dashboard(self, self._game_data.player)
         self._map_dir = map_dir
+        self.bind("<<PlayerMoved>>", self._process_tick)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
@@ -61,14 +62,8 @@ class MainController(tk.Tk):
         else:
             map_file = None
         mining_map = MapData(map_file)
-
+        self._dashboard.set_map(mining_map)
         self._game_data.current_map = mining_map
-        self._dashboard.set_map(mining_map).bind(
-            "<<PlayerMoved>>", self._process_tick
-        )
-        self._health_tracer = self._game_data.player.health.trace_add(
-            "write", self._finish_mining
-        )
 
         self.ticks.counter.reset()
         self._tick_tracer = self.ticks.counter.trace_add(

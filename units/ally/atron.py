@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 from utils import Context, Counter, Icon
 
 if TYPE_CHECKING:
-    from gui.map_window import MapWindow
+    from utils.map_data import MapData
 
 
 class Atron(ABC):
@@ -85,14 +85,12 @@ class Atron(ABC):
         """The icon of this atron."""
         raise NotImplementedError("Atron subtypes must implement icon")
 
-    def deploy(self, map_window: MapWindow) -> None:
+    def deploy(self, map_data: MapData) -> None:
         """Deploy the atron on the map.
 
         Args:
             map_window (MapWindow): The map window to deploy the atron on.
         """
-        if not (map_data := map_window.map_data):
-            raise ValueError("Map data not set")
         map_data.deploy_atron(self)
 
     def undeploy(self) -> int:

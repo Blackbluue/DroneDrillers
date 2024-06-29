@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import tkinter
+import tkinter as tk
 from tkinter import ttk
 from typing import TYPE_CHECKING
 
 from utils.icon import Icon
 
+from .graphic_tile import GraphicTile
 from .label_counter import LabeledCounter
-from .map_window import MapWindow
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -19,20 +19,21 @@ if TYPE_CHECKING:
     from utils import MapData
 
 
-class Dashboard(tkinter.Toplevel):
+class Dashboard(tk.Toplevel):
     """Display information on the drones and actions in the game."""
 
-    def __init__(self, parent: tkinter.Tk, player: Player) -> None:
+    def __init__(self, parent: tk.Tk, player: Player) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Args:
-            parent (tkinter.Tk): Takes in a tkinter top level window
+            parent (tk.Tk): Takes in a tk top level window
         """
         super().__init__(parent)
-        self.photo = tkinter.PhotoImage(file="icon.png")
+        self.photo = tk.PhotoImage(file="icon.png")
         self.configure(bg="#2C292C")
 
-        self._map_window = MapWindow(self, "Mining Map")
+        self._map_frame = tk.Frame(self)
+        self._map_frame.grid(row=0, column=0, rowspan=2, padx=20, pady=20)
 
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
@@ -44,30 +45,24 @@ class Dashboard(tkinter.Toplevel):
             "Player Health:",
             counter=player.health,
         )
-        self._player_health.grid(row=0, column=0, columnspan=2)
+        self._player_health.grid(row=1, column=0, columnspan=2)
         self.title("Overlord's Dashboard")
 
-    def set_map(self, map_data: MapData) -> MapWindow:
+    def set_map(self, map_data: MapData) -> None:
         """Set the mining map.
 
         Args:
-            map_file (MapData): The map data.
+            map_data (MapData): The map data.
         """
-        self._map_window.map_data = map_data
-        self._player.deploy(self._map_window)
-        self._player_health.counter.reset()
-        return self._map_window
-
-    def unset_map(self) -> None:
-        """Unset the mining map."""
-        if self._map_window:
-            self._map_window.unbind("<<PlayerMoved>>")
+        for widget in self._map_frame.winfo_children():
+            widget.destroy()
+        for tile in iter(map_data):
+            GraphicTile(self._map_frame, tile)
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
 
         Dashboards typically serve as spreadsheets in the gui.
-        https://www.geeksforgeeks.org/python-tkinter-treeview-scrollbar/
         Args:
             labels (Mapping[str, int]): Contains dictionaries and
                 width values for each column.
@@ -116,9 +111,9 @@ class Dashboard(tkinter.Toplevel):
         }
         padding = (20, 20)
         self.legend_tree = self._make_tree(legend_labels)
-        self.legend_tree.grid(row=1, column=0, padx=padding, pady=padding)
+        self.legend_tree.grid(row=2, column=0, padx=padding, pady=padding)
         self.drone_tree = self._make_tree(drone_labels)
-        self.drone_tree.grid(row=1, column=1, padx=padding, pady=padding)
+        self.drone_tree.grid(row=2, column=1, padx=padding, pady=padding)
 
     def add_atron_to_tree(self, new_drone: Atron) -> None:
         """Add a drone to the drone tree in the gui.
