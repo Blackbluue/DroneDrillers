@@ -54,8 +54,11 @@ class MainController(tk.Tk):
 
     def _start_button_handler(self) -> None:
         """Start the game."""
+        if self._tick_tracer:
+            self._ticks.trace_remove("write", self._tick_tracer)
+            self._tick_tracer = ""
+        self._game_data.player.undeploy()
         self._set_new_map()
-
         self._ticks.reset()
         self._tick_tracer = self._ticks.trace_add("write", self._finish_mining)
         self._refined.reset()
@@ -91,15 +94,7 @@ class MainController(tk.Tk):
         print(mining_map, file=sys.stderr)
         self._ticks.count(-1)
 
-    def _reset_map(self) -> None:
-        """Reset the mining map."""
-        if self._tick_tracer:
-            self._ticks.trace_remove("write", self._tick_tracer)
-            self._tick_tracer = ""
-        self._game_data.undeploy_player()
-        self._game_data.current_map = None
-
-    def _finish_mining(self, var: str, index: str, mode: str) -> None:
+    def _finish_mining(self, *_) -> None:
         """Finish the mining expedition.
 
         Args:
@@ -110,7 +105,10 @@ class MainController(tk.Tk):
         # TODO: health checked at end of tick. need to check after player moves
         player = self._game_data.player
         if self._ticks.get() == 0 or player.health.get() <= 0:
-            self._reset_map()
+            self._ticks.trace_remove("write", self._tick_tracer)
+            self._tick_tracer = ""
+            self._game_data.undeploy_player()
+            self._game_data.current_map = None
             print(
                 "Total mined:", self._game_data.total_refined, file=sys.stderr
             )

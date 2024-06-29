@@ -100,7 +100,7 @@ class Atron(ABC):
             int: The payload of this atron.
         """
         if not self.deployed:
-            raise ValueError("Unit not deployed")
+            return 0
         self._context = None
         payload = self._payload.get()
         self._payload.reset()
