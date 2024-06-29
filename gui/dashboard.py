@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 from utils.icon import Icon
 
-from .graphic_tile import GraphicTile
 from .label_counter import LabeledCounter
 
 if TYPE_CHECKING:
@@ -16,7 +15,6 @@ if TYPE_CHECKING:
 
     from units.ally import Atron, Player
     from units.ally.drones import Drone
-    from utils import MapData
 
 
 class Dashboard(tk.Toplevel):
@@ -32,9 +30,6 @@ class Dashboard(tk.Toplevel):
         self.photo = tk.PhotoImage(file="icon.png")
         self.configure(bg="#2C292C")
 
-        self._map_frame = tk.Frame(self)
-        self._map_frame.grid(row=0, column=0, rowspan=2, padx=20, pady=20)
-
         # Configure the style of Heading in Treeview widget
         self.wm_iconphoto(False, self.photo)
         self._prep_dashboard_trees()
@@ -47,17 +42,6 @@ class Dashboard(tk.Toplevel):
         )
         self._player_health.grid(row=1, column=0, columnspan=2)
         self.title("Overlord's Dashboard")
-
-    def set_map(self, map_data: MapData) -> None:
-        """Set the mining map.
-
-        Args:
-            map_data (MapData): The map data.
-        """
-        for widget in self._map_frame.winfo_children():
-            widget.destroy()
-        for tile in iter(map_data):
-            GraphicTile(self._map_frame, tile)
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.

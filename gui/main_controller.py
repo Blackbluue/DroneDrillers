@@ -11,6 +11,7 @@ from utils import MapData
 from utils.game_data import GameData
 
 from .dashboard import Dashboard
+from .graphic_tile import GraphicTile
 from .label_counter import LabeledCounter
 
 DEFAULT_TICKS = 100
@@ -24,15 +25,15 @@ class MainController(tk.Tk):
         """Root window that contains fields for initial values."""
         super().__init__()
         self.title("Atron Mining Expedition")
-        self.geometry("400x150+0+0")
+        # self.geometry("400x150+0+0")
         self._initialize_values(map_dir)
 
     def _initialize_values(self, map_dir: str | None) -> None:
         """Initialize game values from the GUI."""
-        self.ticks = LabeledCounter(
+        self._ticks = LabeledCounter(
             self, "Ticks:", value=DEFAULT_TICKS, max_value=DEFAULT_TICKS
         )
-        self.refined = LabeledCounter(
+        self._refined = LabeledCounter(
             self,
             "Refined Minerals:",
             value=DEFAULT_REFINED,
@@ -41,35 +42,29 @@ class MainController(tk.Tk):
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
-        self.ticks.pack()
-        self.refined.pack()
-        self._start_button.pack()
         self._tick_tracer = ""
-        self._health_tracer = ""
 
         self._game_data = GameData(self)
-        self._dashboard = Dashboard(self, self._game_data.player)
         self._map_dir = map_dir
+        self._dashboard = Dashboard(self, self._game_data.player)
+        self._map_frame = tk.Frame(self)
+
+        self._ticks.pack()
+        self._refined.pack()
+        self._start_button.pack()
+        self._map_frame.pack()
+
         self.bind("<<PlayerMoved>>", self._process_tick)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
-        self._reset_map()
+        self._set_new_map()
 
-        if self._map_dir:
-            random_file = random.choice(os.listdir(self._map_dir))
-            map_file = os.path.join(self._map_dir, random_file)
-        else:
-            map_file = None
-        mining_map = MapData(map_file)
-        self._dashboard.set_map(mining_map)
-        self._game_data.current_map = mining_map
-
-        self.ticks.counter.reset()
-        self._tick_tracer = self.ticks.counter.trace_add(
+        self._ticks.counter.reset()
+        self._tick_tracer = self._ticks.counter.trace_add(
             "write", self._finish_mining
         )
-        self.refined.counter.reset()
+        self._refined.counter.reset()
 
     def _process_tick(self, event: tk.Event) -> None:
         """Process a tick of the game.
@@ -100,16 +95,13 @@ class MainController(tk.Tk):
         )
         mining_map.tick(deployed_drones)
         print(mining_map, file=sys.stderr)
-        self.ticks.counter.count(-1)
+        self._ticks.counter.count(-1)
 
     def _reset_map(self) -> None:
         """Reset the mining map."""
         if self._tick_tracer:
-            self.ticks.counter.trace_remove("write", self._tick_tracer)
+            self._ticks.counter.trace_remove("write", self._tick_tracer)
             self._tick_tracer = ""
-        if self._health_tracer:
-            self.ticks.counter.trace_remove("write", self._health_tracer)
-            self._health_tracer = ""
         self._game_data.undeploy_player()
         self._game_data.current_map = None
 
@@ -121,9 +113,26 @@ class MainController(tk.Tk):
             index (str): The index of the variable.
             mode (str): The mode of the variable.
         """
+        # TODO: health checked at end of tick. need to check after player moves
         player = self._game_data.player
-        if self.ticks.counter.get() == 0 or player.health.get() <= 0:
+        if self._ticks.counter.get() == 0 or player.health.get() <= 0:
             self._reset_map()
             print(
                 "Total mined:", self._game_data.total_refined, file=sys.stderr
             )
+
+    def _set_new_map(self) -> None:
+        """Set the mining map."""
+        if self._map_dir:
+            random_file = random.choice(os.listdir(self._map_dir))
+            map_file = os.path.join(self._map_dir, random_file)
+        else:
+            map_file = None
+        mining_map = MapData(map_file)
+
+        for widget in self._map_frame.winfo_children():
+            widget.destroy()
+        for tile in iter(mining_map):
+            GraphicTile(self._map_frame, tile)
+
+        self._game_data.current_map = mining_map
