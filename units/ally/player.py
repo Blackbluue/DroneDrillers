@@ -92,9 +92,13 @@ class Player(Atron):
                 direction
             )
             self._map_data.move_to(self, new_location)
-        if health_adjust := self.context.center.terrain.health_cost():
+        curr_spot = self.context.center.terrain
+        if health_adjust := curr_spot.health_cost():
             self.health.count(health_adjust)
             if self.health.get() <= 0:
                 self._map_data.remove_atron(self)
                 return
-        self._window.event_generate("<<PlayerMoved>>")
+        if curr_spot == Icon.DEPLOY_ZONE:
+            self._window.event_generate("<<PlayerReturned>>")
+        else:
+            self._window.event_generate("<<PlayerMoved>>")

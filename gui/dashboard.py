@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import tkinter as tk
-from tkinter import ttk
+from tkinter import Tk, ttk
 from typing import TYPE_CHECKING
 
 from .label_counter import LabeledCounter
@@ -14,31 +13,39 @@ if TYPE_CHECKING:
     from units.ally import Atron
     from units.ally.drones import Drone
     from utils.counter import Counter
+    from utils.game_data import GameData
 
 
-class Dashboard(tk.Frame):
+class Dashboard(ttk.Frame):
     """Display information on the drones and actions in the game."""
 
     def __init__(
         self,
-        parent: tk.Tk,
-        player_health: Counter,
+        parent: Tk,
+        game_data: GameData,
         ticks: Counter,
-        minerals: Counter,
     ) -> None:
         """Serve as the constructor for the Dashboard object.
 
         Args:
-            parent (tk.Tk): Takes in a tk top level window
+            parent (Tk): The parent window.
+            game_data (GameData): The game data.
+            ticks (Counter): The counter for the ticks.
         """
         super().__init__(parent)
 
         self._player_health = LabeledCounter(
-            self, "Player Health:", counter=player_health
+            self, "Health:", counter=game_data.player.health
+        )
+        self._player_payload = LabeledCounter(
+            self, "Payload:", counter=game_data.player.payload
         )
         self._ticks = LabeledCounter(self, "Ticks:", counter=ticks)
+        self._unrefined = LabeledCounter(
+            self, "Unrefined Minerals:", counter=game_data.total_unrefined
+        )
         self._refined = LabeledCounter(
-            self, "Refined Minerals:", counter=minerals
+            self, "Refined Minerals:", counter=game_data.total_refined
         )
 
         drone_labels = {
@@ -51,7 +58,9 @@ class Dashboard(tk.Frame):
 
         self._drone_tree.pack(side="left")
         self._player_health.pack()
+        self._player_payload.pack()
         self._ticks.pack()
+        self._unrefined.pack()
         self._refined.pack()
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:

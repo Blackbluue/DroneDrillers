@@ -39,9 +39,8 @@ class MainController(tk.Tk):
         self._map_dir: str | None = map_dir
         self._dashboard = Dashboard(
             self,
-            self._game_data.player.health,
+            self._game_data,
             self._ticks,
-            self._game_data.total_refined,
         )
         self._map_frame = tk.Frame(self)
 
@@ -49,7 +48,8 @@ class MainController(tk.Tk):
         self._map_frame.pack()
         self._dashboard.pack()
 
-        self.bind("<<PlayerMoved>>", self._process_tick)
+        self.bind("<<PlayerMoved>>", self._process_tick, add=True)
+        self.bind("<<PlayerReturned>>", self._extract_player, add=True)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
@@ -67,7 +67,7 @@ class MainController(tk.Tk):
         Args:
             event (tk.Event): The event that triggered the tick.
         """
-        if not (mining_map := self._game_data.current_map):
+        if not (map_data := self._game_data.current_map):
             return
 
         overlord = self._game_data.overlord
@@ -75,11 +75,11 @@ class MainController(tk.Tk):
         match action:
             case "RETURN":
                 drone_id = next(map(int, opts.split()))
-                mining_map.remove_atron(overlord.drones[drone_id])
+                map_data.remove_atron(overlord.drones[drone_id])
             case "DEPLOY":
                 drone_id, _ = map(int, opts.split())
                 # check if drone is already deployed
-                mining_map.deploy_atron(overlord.drones[drone_id])
+                map_data.deploy_atron(overlord.drones[drone_id])
             case "":
                 pass  # Do nothing
             case _:  # Ignore other actions
@@ -88,9 +88,18 @@ class MainController(tk.Tk):
         deployed_drones = list(
             filter(lambda drone: drone.deployed, overlord.drones.values())
         )
-        mining_map.tick(deployed_drones)
-        print(mining_map, file=sys.stderr)
+        map_data.tick(deployed_drones)
+        print(map_data, file=sys.stderr)
         self._ticks.count(-1)
+
+    def _extract_player(self, event: tk.Event) -> None:
+        """Extract the player from the map.
+
+        Args:
+            event (tk.Event): The event that triggered the player extraction.
+        """
+        self._game_data.collect_minerals(self._game_data._player)
+        self.event_generate("<<PlayerMoved>>")
 
     def _finish_mining(self, *_) -> None:
         """Finish the mining expedition.
@@ -105,7 +114,8 @@ class MainController(tk.Tk):
         if self._ticks.get() == 0 or player.health.get() <= 0:
             self._ticks.trace_remove("write", self._tick_tracer)
             self._tick_tracer = ""
-            self._game_data.undeploy_player()
+            self._game_data.finish_excavation()
+            self._game_data.player.undeploy()
             self._game_data.current_map = None
 
     def _set_new_map(self) -> None:
@@ -115,11 +125,11 @@ class MainController(tk.Tk):
             map_file = os.path.join(self._map_dir, random_file)
         else:
             map_file = None
-        mining_map = MapData(map_file)
+        map_data = MapData(map_file)
 
         for widget in self._map_frame.winfo_children():
             widget.destroy()
-        for tile in iter(mining_map):
+        for tile in iter(map_data):
             GraphicTile(self._map_frame, tile)
 
-        self._game_data.current_map = mining_map
+        self._game_data.current_map = map_data

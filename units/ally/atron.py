@@ -85,6 +85,16 @@ class Atron(ABC):
         """The icon of this atron."""
         raise NotImplementedError("Atron subtypes must implement icon")
 
+    def extract_minerals(self) -> int:
+        """Extract the minerals from this atron.
+
+        Returns:
+            int: The extracted minerals.
+        """
+        extracted = self._payload.get()
+        self._payload.reset()
+        return extracted
+
     def deploy(self, map_data: MapData) -> None:
         """Deploy the atron on the map.
 
@@ -102,9 +112,7 @@ class Atron(ABC):
         if not self.deployed:
             return 0
         self._context = None
-        payload = self._payload.get()
-        self._payload.reset()
-        return payload
+        return self.extract_minerals()
 
     def __str__(self) -> str:
         """Return the string representation of this atron.

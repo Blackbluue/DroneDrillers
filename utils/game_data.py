@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from collections.abc import Mapping
     from tkinter import Tk
 
+    from units.ally.atron import Atron
     from units.ally.drones import Drone
     from utils import MapData
 
@@ -26,6 +27,7 @@ class GameData:
         self._overlord = Overlord()
         self._drones = self._overlord.drones
         self._total_refined = Counter(value=STARTING_REFINED)
+        self._total_unrefined = Counter(value=0)
 
     @property
     def player(self) -> Player:
@@ -61,11 +63,21 @@ class GameData:
         return self._drones
 
     @property
+    def total_unrefined(self) -> Counter:
+        """The total unrefined minerals."""
+        return self._total_unrefined
+
+    @property
     def total_refined(self) -> Counter:
         """The total refined minerals."""
         return self._total_refined
 
-    def undeploy_player(self) -> None:
-        """Retrieve the player from the map."""
-        if self._player.deployed:
-            self._total_refined.count(self._player.undeploy())
+    def finish_excavation(self) -> None:
+        """Finish the excavation on the current map."""
+        self._total_refined.count(self._total_unrefined.get())
+        self._total_unrefined.reset()
+        self._player.undeploy()
+
+    def collect_minerals(self, atron: Atron) -> None:
+        """Extract the minerals from the player."""
+        self._total_unrefined.count(atron.extract_minerals())

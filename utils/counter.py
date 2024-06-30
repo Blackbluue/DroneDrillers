@@ -20,8 +20,10 @@ class Counter(tk.IntVar):
         Args:
             master (tk.Widget | None, optional): The parent widget. Defaults to None.
             name (str | None, optional): The name of the counter.. Defaults to None.
-            value (int): The default value for the counter.
-            max_value (int): The maximum value for the counter.
+            value (int | None, optional): The initial value of the counter.
+                Defaults to None.
+            max_value (int | None, optional): The maximum value of the counter.
+                Defaults to None.
         """
         super().__init__(master, value, name)
         if value is not None and value < 0:
