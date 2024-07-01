@@ -57,7 +57,7 @@ class Atron(ABC):
         Returns:
             bool: True if deployed, False otherwise.
         """
-        return self._context != None
+        return self._context is not None
 
     @property
     def context(self) -> Context:
