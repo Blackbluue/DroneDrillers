@@ -57,12 +57,8 @@ class MainController(tk.Tk):
         self._set_new_map()
         self._ticks.reset()
 
-    def _process_tick(self, event: tk.Event) -> None:
-        """Process a tick of the game.
-
-        Args:
-            event (tk.Event): The event that triggered the tick.
-        """
+    def _process_tick(self, _) -> None:
+        """Process a tick of the game."""
         if not (map_data := self._game_data.current_map):
             return
 
@@ -90,21 +86,13 @@ class MainController(tk.Tk):
         if self._ticks.get() == 0:
             self._game_data.finish_excavation()
 
-    def _extract_player(self, event: tk.Event) -> None:
-        """Extract the player from the map.
-
-        Args:
-            event (tk.Event): The event that triggered the player extraction.
-        """
+    def _extract_player(self, _) -> None:
+        """Extract the player from the map."""
         self._game_data.collect_minerals(self._game_data._player)
         self.event_generate("<<PlayerMoved>>")
 
-    def _player_died(self, event: tk.Event) -> None:
-        """Handle the player's death.
-
-        Args:
-            event (tk.Event): The event that triggered the player's death.
-        """
+    def _player_died(self, _) -> None:
+        """Handle the player's death."""
         self._game_data.finish_excavation()
 
     def _set_new_map(self) -> None:
