@@ -10,6 +10,7 @@ class Icon(Enum):
     ATRON = "A"
     SCOUT = "S"
     MINER = "M"
+    PLAYER = "P"
     WALL = "#"
     DEPLOY_ZONE = "_"
     MINERAL = "*"
@@ -28,16 +29,18 @@ class Icon(Enum):
     def health_cost(self) -> int:
         """Return the health cost for traversing over this tile.
 
-        If the tile is not traversable, a value of -1 will be returned.
+        Any tile that causes damage for traveling over it will return a
+        negative number representing the health cost. Healing tiles will return
+        a positive number representing the health cost.
 
         Returns:
-            int: A non-negative number representing the health cost, or -1.
+            int: A number representing the health cost.
         """
         match self:
             case Icon.WALL:
-                return 1
+                return -1
             case Icon.ACID:
-                return 3
+                return -3
             case _:
                 return 0
 
@@ -48,13 +51,14 @@ class Icon(Enum):
             str: The icon as a unicode character.
         """
         return {
-            Icon.WALL: "\u039E",
-            Icon.ACID: "\u05e1",
+            Icon.ATRON: "\u00C4",
             Icon.SCOUT: "\u00A7",
             Icon.MINER: "\u00A3",
-            Icon.MINERAL: "\u0275",
-            Icon.ATRON: "\u00C4",
+            Icon.PLAYER: "\u20B1",
+            Icon.WALL: "\u039E",
             Icon.DEPLOY_ZONE: "\u02c5",
+            Icon.MINERAL: "\u0275",
+            Icon.ACID: "\u05e1",
             Icon.EMPTY: " ",
             Icon.UNKNOWN: "\u02D1",
         }[self]

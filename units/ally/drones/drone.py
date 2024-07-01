@@ -2,19 +2,18 @@
 
 from __future__ import annotations
 
+from abc import abstractmethod
 from enum import Enum, auto
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
-from utils import Context, Coordinate, Counter, Icon
+from utils import Context, Coordinate
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
     from units.ally.overlord import Overlord
 
-
-DEFAULT_CONTEXT = Context()
 
 DEFAULT_HEALTH = 40
 DEFAULT_CAPACITY = 10
@@ -26,21 +25,10 @@ class Drone(Atron):
 
     def __init__(self, overlord: Overlord) -> None:
         """Initialize a Drone."""
-        super().__init__(DEFAULT_HEALTH)
+        super().__init__(DEFAULT_HEALTH, DEFAULT_CAPACITY)
         self._overlord = overlord
         self._moves = DEFAULT_MOVES
-        self._payload = Counter(value=0, max_value=DEFAULT_CAPACITY)
         self._path_to_goal: MutableSequence[Coordinate] = []
-        self._context: Context = DEFAULT_CONTEXT
-
-    @property
-    def payload(self) -> Counter:
-        """The drone's mineral payload.
-
-        Returns:
-            Counter: The mineral payload.
-        """
-        return self._payload
 
     @property
     def moves(self) -> int:
@@ -50,33 +38,6 @@ class Drone(Atron):
             int: The drone's max moves.
         """
         return self._moves
-
-    @property
-    def deployed(self) -> bool:
-        """Whether this drone has been deployed.
-
-        Returns:
-            bool: True if deployed, False otherwise.
-        """
-        return self._context != DEFAULT_CONTEXT
-
-    @property
-    def context(self) -> Context:
-        """The context surrounding this drone.
-
-        Returns:
-            Context: The context.
-        """
-        return self._context
-
-    @context.setter
-    def context(self, new_context: Context) -> None:
-        """Set the context surrounding this drone.
-
-        Args:
-            new_context (Context): The new context.
-        """
-        self._context = new_context
 
     @property
     def path(self) -> MutableSequence[Coordinate]:
@@ -94,29 +55,20 @@ class Drone(Atron):
         # traveling if path length is greater than 2 (start, dest)
         self.state = State.TRAVELING if len(new_path) > 2 else State.WAITING
 
-    @property
-    def icon(self) -> Icon:
-        """The icon of this drone type."""
-        raise NotImplementedError("Drone subtypes must implement icon")
+    @abstractmethod
+    def action(self, context: Context) -> str:
+        """Perform some action, based on the type of drone.
 
-    def deploy_drone(self, context: Context) -> None:
-        """Deploy the drone to the map."""
-        if self.deployed:
-            raise ValueError("Drone already deployed")
-        self._context = context
+        The drone will internally have it's own orders set by the overlord.
+        These orders may take the context into account.
 
-    def undeploy_drone(self) -> int:
-        """Retrieve the drone from the map and extract the payload.
+        Args:
+            context (Context): The context surrounding the drone.
 
         Returns:
-            int: The payload of this drone.
+            str: The action the drone wants to take.
         """
-        if not self.deployed:
-            raise ValueError("Drone not deployed")
-        self._context = DEFAULT_CONTEXT
-        payload = self._payload.get()
-        self._payload.reset()
-        return payload
+        raise NotImplementedError("Drone subtypes must implement action")
 
 
 class State(Enum):

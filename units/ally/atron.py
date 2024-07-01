@@ -5,16 +5,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from utils import Counter
+from utils import Context, Counter, Icon
 
 if TYPE_CHECKING:
-    from utils import Context
+    from utils.map_data import MapData
 
 
 class Atron(ABC):
     """Abstract base class for all atron units."""
 
-    def __init__(self, health: int) -> None:
+    def __init__(self, health: int, capacity: int = 0) -> None:
         """Initialize a atron unit.
 
         The atron's health must be at least 1.
@@ -24,10 +24,13 @@ class Atron(ABC):
 
         Args:
             health (int): The atron's maximum health.
+            capacity (int, optional): The atron's maximum mineral capacity.
         """
         if health <= 0:
             raise ValueError("Atron health must be 1 or greater")
         self._health = Counter(value=health, max_value=health)
+        self._payload = Counter(value=0, max_value=capacity)
+        self._context: Context | None = None
 
     @property
     def health(self) -> Counter:
@@ -38,22 +41,83 @@ class Atron(ABC):
         """
         return self._health
 
-    @abstractmethod
-    def action(self, context: Context) -> str:
-        """Perform some action, based on the type of atron.
+    @property
+    def payload(self) -> Counter:
+        """The atron's mineral payload.
+
+        Returns:
+            Counter: The mineral payload.
+        """
+        return self._payload
+
+    @property
+    def deployed(self) -> bool:
+        """Whether this drone has been deployed.
+
+        Returns:
+            bool: True if deployed, False otherwise.
+        """
+        return self._context is not None
+
+    @property
+    def context(self) -> Context:
+        """The context surrounding this atron.
+
+        Returns:
+            Context: The context.
+        """
+        if self._context is None:
+            raise ValueError("Context not set")
+        return self._context
+
+    @context.setter
+    def context(self, new_context: Context) -> None:
+        """Set the context surrounding this atron.
 
         Args:
-            context (Context): The context surrounding the atron.
-
-        Returns:
-            str: The action the atron wants to take.
+            new_context (Context): The new context.
         """
-        raise NotImplementedError("Atron subtypes must implement action")
+        self._context = new_context
 
-    def __str__(self):
-        """Return the string representation of this object.
+    @property
+    @abstractmethod
+    def icon(self) -> Icon:
+        """The icon of this atron."""
+        raise NotImplementedError("Atron subtypes must implement icon")
+
+    def extract_minerals(self) -> int:
+        """Extract the minerals from this atron.
 
         Returns:
-            _type_: The string representation of this object.
+            int: The extracted minerals.
+        """
+        extracted = self._payload.get()
+        self._payload.reset()
+        return extracted
+
+    def deploy(self, map_data: MapData) -> None:
+        """Deploy the atron on the map.
+
+        Args:
+            map_window (MapWindow): The map window to deploy the atron on.
+        """
+        map_data.deploy_atron(self)
+
+    def undeploy(self) -> int:
+        """Retrieve the atron from the map and extract the payload.
+
+        Returns:
+            int: The payload of this atron.
+        """
+        if not self.deployed:
+            return 0
+        self._context = None
+        return self.extract_minerals()
+
+    def __str__(self) -> str:
+        """Return the string representation of this atron.
+
+        Returns:
+            str: The string representation of this atron.
         """
         return f"{self.__class__.__name__}"

@@ -5,7 +5,7 @@ from __future__ import annotations
 from queue import PriorityQueue, SimpleQueue
 from typing import TYPE_CHECKING
 
-from utils import Context, Icon, MapData
+from utils import Context, Icon
 
 from .atron import Atron
 from .drones import Drone
@@ -18,7 +18,7 @@ if TYPE_CHECKING:
         MutableSet,
     )
 
-    from utils import Coordinate
+    from utils import Coordinate, MapData
 
 DEFAULT_HEALTH = 10
 
@@ -56,23 +56,30 @@ class Overlord(Atron):
         self._tasked_minerals: MutableSet[Coordinate] = set()
         # a set of the coords of tasked minerals
 
-    def set_map(self, mining_map: MapData) -> None:
-        """Register the mining map to the overlord.
+    @property
+    def icon(self) -> Icon:
+        """The icon of this drone type."""
+        return Icon.DEPLOY_ZONE
+
+    def deploy(self, map_data: MapData) -> None:
+        """Deploy the overlord on the map.
 
         Args:
-            mining_map (MapData): The map to register.
+            map_data (MapData): The map to deploy the overlord on.
         """
-        self._mining_map = mining_map
+        super().deploy(map_data)
+        self._mining_map = map_data
 
-    def action(self, context=None) -> str:
-        """Perform some action, based on the context of the situation.
+    def order_drones(self) -> str:
+        """Give orders to the drones.
 
-        Args:
-            context (Context): Context surrounding the overlord;
-                currently unused
+        Makes decisions on what tasks to assign to drones. If the overlord
+        decides to deploy or retrieve a drone, it will return the action
+        for the drone to perform. Otherwise, it will return an empty string.
+
 
         Returns:
-            str: The action for the overlord to perform
+            str: The action for the overlord to perform.
         """
         return ""
 
@@ -173,11 +180,11 @@ class Overlord(Atron):
             ) is None:
                 # tile not in map
                 continue
-            if neighbor.icon and neighbor.icon not in _NODE_WEIGHTS:
+            if neighbor.surface and neighbor.surface not in _NODE_WEIGHTS:
                 # tile not pathable
                 continue
             parents_map[neighbor.coordinate] = node
-            pqueue.put((_NODE_WEIGHTS[neighbor.icon], neighbor.coordinate))
+            pqueue.put((_NODE_WEIGHTS[neighbor.surface], neighbor.coordinate))
 
     @staticmethod
     def _build_final_path(

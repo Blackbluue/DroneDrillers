@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from tkinter import BooleanVar
 from typing import TYPE_CHECKING
 
+from .icon_var import IconVar
+
 if TYPE_CHECKING:
-    from units.ally.drones import Drone
+    from units.ally import Atron
 
     from .coordinate import Coordinate
     from .icon import Icon
@@ -14,19 +17,18 @@ if TYPE_CHECKING:
 class Tile:
     """A single tile on the map."""
 
-    def __init__(
-        self, coordinate: Coordinate, icon: Icon | None = None
-    ) -> None:
+    def __init__(self, coordinate: Coordinate, icon: Icon) -> None:
         """Initialize the tile.
 
         Args:
             coordinate (Coordinate): The coordinate of this tile.
-            icon (Icon, optional): The icon on this tile, if
-                discovered. Defaults to None.
+            icon (Icon): The icon on this tile.
         """
         self._coordinate = coordinate
-        self._icon = icon
-        self._occupation: Drone | None = None
+        self._surface = IconVar(value=icon)
+        self._terrain = IconVar(value=icon)
+        self._discovered = BooleanVar(value=False)
+        self._occupation: Atron | None = None
 
     @property
     def coordinate(self) -> Coordinate:
@@ -34,39 +36,63 @@ class Tile:
         return self._coordinate
 
     @property
-    def icon(self) -> Icon | None:
-        """The icon for this tile.
+    def surface(self) -> Icon:
+        """The surface icon for this tile.
 
-        Setting the icon for a tile implicitly makes it discovered. If a tile
-        is not discovered, the icon will always be None.
+        The surface icon will always be visible on the map.
+
+        If the new icon is traversable, setting the surface icon will also set
+        the terrain icon to the same icon.
         """
-        return self._occupation.icon if self._occupation else self._icon
+        return self._surface.get()
 
-    @icon.setter
-    def icon(self, icon: Icon) -> None:
-        if not icon:
-            raise ValueError("Cannot set icon to None")
-        self._icon = icon
-
-    @property
-    def discovered(self) -> bool:
-        """True if the tile has been discovered and has an icon, else False."""
-        return bool(self.icon)
+    @surface.setter
+    def surface(self, icon: Icon) -> None:
+        self._surface.set(icon)
+        if icon.traversable():
+            self._terrain.set(icon)
 
     @property
-    def occupied_drone(self) -> Drone | None:
-        """The drone occupying this tile, which may be None."""
+    def surface_var(self) -> IconVar:
+        """The surface icon variable for this tile."""
+        return self._surface
+
+    @property
+    def terrain(self) -> Icon:
+        """The terrain of this tile.
+
+        The terrain is different from the tile surface icon, in that it is the
+        underlying icon of the tile, and not the icon that is currently
+        displayed on the tile.
+        """
+        return self._terrain.get()
+
+    @terrain.setter
+    def terrain(self, icon: Icon) -> None:
+        self._terrain.set(icon)
+
+    @property
+    def discovered(self) -> BooleanVar:
+        """The discovered status of the tile.
+
+        An undiscovered tile cannot be occupied, and will not show on the map.
+        """
+        return self._discovered
+
+    @property
+    def occupied_drone(self) -> Atron | None:
+        """The atron occupying this tile, which may be None."""
         return self._occupation
 
     @occupied_drone.setter
-    def occupied_drone(self, drone: Drone | None) -> None:
-        if drone:
-            self._occupy(drone)
+    def occupied_drone(self, atron: Atron | None) -> None:
+        if atron:
+            self._occupy(atron)
         else:
             self._unoccupy()
 
-    def _occupy(self, drone: Drone) -> bool:
-        """Occupy this tile with an atron drone.
+    def _occupy(self, atron: Atron) -> bool:
+        """Occupy this tile with an atron.
 
         An occupied tile will return an atron icon for the icon property. An
         occupied tile will remember the icon that was on it before the atron
@@ -81,17 +107,16 @@ class Tile:
         Returns:
             bool: Whether occupation of the tile succeeded.
         """
-        if not self.icon:
+        if not self.discovered:
             raise RuntimeError("An undiscovered tile cannot be occupied")
-        if not self.icon.traversable():
+        if not self.surface.traversable():
             return False
-        # self._old_icon = self.icon
-        # self._icon = Icon.ATRON
-        self._occupation = drone
+        self._occupation = atron
+        self._surface.set(atron.icon)
         return True
 
     def _unoccupy(self) -> bool:
-        """Unoccupy this tile with an atron drone.
+        """Unoccupy this tile with an atron.
 
         Unoccupying a tile will cause the original icon on the tile to returned
         by the icon property. Trying to unoccupy a tile that was not unoccupied
@@ -109,8 +134,8 @@ class Tile:
             raise RuntimeError("An undiscovered tile cannot be unoccupied")
         if not self._occupation:
             return False
-        # self._icon = self._old_icon
         self._occupation = None
+        self._surface.set(self._terrain.get())
         return True
 
     def __eq__(self, __o):
@@ -142,11 +167,13 @@ class Tile:
         )
 
     def __str__(self) -> str:
-        icon_msg = f"Icon: {self.icon.value}" if self.icon else "Undiscovered"
+        icon_msg = (
+            f"Icon: {self.surface.value}" if self.surface else "Undiscovered"
+        )
         return f"Tile({self.coordinate}, {icon_msg})"
 
     def __repr__(self) -> str:
-        return f"Tile({self.coordinate}, {self.icon})"
+        return f"Tile({self.coordinate}, {self.surface})"
 
     def __hash__(self) -> int:
         """The hash value of this object.

@@ -2,6 +2,8 @@
 
 import tkinter as tk
 
+DEFAULT_VALUE = -1
+
 
 class Counter(tk.IntVar):
     """A counter variable."""
@@ -9,35 +11,39 @@ class Counter(tk.IntVar):
     def __init__(
         self,
         master: tk.Widget | None = None,
-        value: int = 0,
         name: str | None = None,
-        max_value: int = 0,
+        value: int | None = None,
+        max_value: int | None = None,
     ) -> None:
         """Create a counter variable.
 
         Args:
-            master (tk.Widget): The parent widget.
-            value (int): The default value for the counter.
-            name (str): The name of the counter.
-            max_value (int): The maximum value for the counter.
+            master (tk.Widget | None, optional): The parent widget. Defaults to None.
+            name (str | None, optional): The name of the counter.. Defaults to None.
+            value (int | None, optional): The initial value of the counter.
+                Defaults to None.
+            max_value (int | None, optional): The maximum value of the counter.
+                Defaults to None.
         """
         super().__init__(master, value, name)
-        if value < 0:
+        if value is not None and value < 0:
             raise ValueError("Value must be non-negative.")
-        if max_value < value:
+        if value is None:
+            value = 0
+        if max_value is not None and max_value < value:
             raise ValueError(
                 "Max value must be greater than or equal to value."
             )
+        if max_value is None:
+            max_value = DEFAULT_VALUE
         self._start = value
-        # The default value for the counter.
 
         self._max_value = max_value
-        # The maximum value the counter can be set to.
 
     def set(self, value: int) -> None:
         if value < 0:
             value = 0
-        elif value > self._max_value:
+        elif self._max_value != DEFAULT_VALUE and value > self._max_value:
             value = self._max_value
         return super().set(value)
 
@@ -47,8 +53,8 @@ class Counter(tk.IntVar):
         Args:
             value (int): The value to add to the counter.
         """
-        super().set(self.get() + value)
+        self.set(self.get() + value)
 
     def reset(self) -> None:
         """Reset the counter to its default value."""
-        super().set(self._start)
+        self.set(self._start)
