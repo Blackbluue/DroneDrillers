@@ -14,30 +14,18 @@ class LabeledCounter(tk.Frame):
         self,
         owner: tk.Misc,
         label: str,
-        counter: Counter | None = None,
-        value: int = 0,
-        max_value: int = 0,
+        counter: Counter,
     ) -> None:
         """Create a labeled counter.
 
         Args:
             owner (tk.Misc): The owner of the counter.
             label (str): The label to put on the counter.
-            counter (Counter, optional): The counter to use.
-                Defaults to None
-            value (int, optional): The initial value of the counter.
-                Defaults to 0.
-            max_value (int, optional): The maximum value of the counter.
-                Defaults to 0.
+            counter (Counter): The counter to use.
         """
         super().__init__(owner)
 
-        if counter:
-            self._counter = counter
-        else:
-            self._counter = Counter(
-                master=self, value=value, max_value=max_value
-            )
+        self._counter = counter
 
         self._text_label = tk.Label(self, text=f"{label}")
         self._text_label.pack(side=tk.LEFT)
