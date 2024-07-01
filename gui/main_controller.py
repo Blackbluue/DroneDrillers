@@ -33,7 +33,6 @@ class MainController(tk.Tk):
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
-        self._ticks.trace_add("write", self._check_ticks)
 
         self._game_data = GameData(self)
         self._map_dir: str | None = map_dir
@@ -88,6 +87,8 @@ class MainController(tk.Tk):
         map_data.tick(deployed_drones)
         print(map_data, file=sys.stderr)
         self._ticks.count(-1)
+        if self._ticks.get() == 0:
+            self._game_data.finish_excavation()
 
     def _extract_player(self, event: tk.Event) -> None:
         """Extract the player from the map.
@@ -105,17 +106,6 @@ class MainController(tk.Tk):
             event (tk.Event): The event that triggered the player's death.
         """
         self._game_data.finish_excavation()
-
-    def _check_ticks(self, *_) -> None:
-        """Finish the mining expedition.
-
-        Args:
-            var (str): The variable that was modified.
-            index (str): The index of the variable.
-            mode (str): The mode of the variable.
-        """
-        if self._ticks.get() == 0 or self._game_data.player.health.get() <= 0:
-            self._game_data.finish_excavation()
 
     def _set_new_map(self) -> None:
         """Set the mining map."""
