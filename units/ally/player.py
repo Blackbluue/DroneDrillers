@@ -28,6 +28,7 @@ class Player(Atron):
         self._r_bind: str | None = None
         self._u_bind: str | None = None
         self._d_bind: str | None = None
+        self._s_bind: str | None = None
 
     @property
     def icon(self) -> Icon:
@@ -47,6 +48,9 @@ class Player(Atron):
         self._r_bind = self._window.bind("<Right>", self.move_player, add=True)
         self._u_bind = self._window.bind("<Up>", self.move_player, add=True)
         self._d_bind = self._window.bind("<Down>", self.move_player, add=True)
+        self._s_bind = self._window.bind(
+            "<Shift_L>", self.move_player, add=True
+        )
 
     def undeploy(self) -> int:
         """Retrieve the player from the map."""
@@ -63,6 +67,10 @@ class Player(Atron):
         if self._d_bind is not None:
             self._window.unbind("<Down>", self._d_bind)
             self._d_bind = None
+        if self._s_bind is not None:
+            self._window.unbind("<Down>", self._s_bind)
+            self._s_bind = None
+
         self._map_data = None
         return payload
 
@@ -84,8 +92,10 @@ class Player(Atron):
                 direction = Directions.NORTH
             case "Down":
                 direction = Directions.SOUTH
-            case _:
+            case "Shift_L":
                 direction = Directions.CENTER
+            case _:
+                return  # Ignore other keys
         if direction is not Directions.CENTER:
             new_location = self.context.center.coordinate.translate_one(
                 direction
