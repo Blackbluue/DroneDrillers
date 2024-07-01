@@ -57,11 +57,11 @@ class Dashboard(ttk.Frame):
         self._drone_tree = self._make_tree(drone_labels)
 
         self._drone_tree.pack(side="left")
-        self._player_health.pack()
-        self._player_payload.pack()
-        self._ticks.pack()
-        self._unrefined.pack()
-        self._refined.pack()
+        self._player_health.pack(fill="both")
+        self._player_payload.pack(fill="both")
+        self._ticks.pack(fill="both")
+        self._unrefined.pack(fill="both")
+        self._refined.pack(fill="both")
 
     def _make_tree(self, labels: Mapping[str, int]) -> ttk.Treeview:
         """Build trees for the dashboard to use.
