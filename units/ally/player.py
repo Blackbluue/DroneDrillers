@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from tkinter import Tk
 from typing import TYPE_CHECKING
 
 from units.ally.atron import Atron
