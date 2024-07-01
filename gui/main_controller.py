@@ -88,7 +88,7 @@ class MainController(tk.Tk):
 
     def _extract_player(self, _) -> None:
         """Extract the player from the map."""
-        self._game_data.collect_minerals(self._game_data._player)
+        self._game_data.collect_minerals(self._game_data.player)
         self.event_generate("<<PlayerMoved>>")
 
     def _player_died(self, _) -> None:
