@@ -231,16 +231,16 @@ class MapData:
         new_icon = self[new_location].surface
 
         if new_icon.traversable():
-            return self._move_atron(atron, new_location)
-
-        if health_adjust := new_icon.health_cost():
-            atron.health.count(health_adjust)
-        if new_icon == Icon.MINERAL:
-            self._total_minerals[new_location] -= 1
-            atron.payload.count(1)
-            if self._total_minerals[new_location] <= 0:
-                self._clear_tile(new_location)
-                del self._total_minerals[new_location]
+            self._move_atron(atron, new_location)
+        else:
+            if health_adjust := new_icon.health_cost():
+                atron.health.count(health_adjust)
+            if new_icon == Icon.MINERAL:
+                self._total_minerals[new_location] -= 1
+                atron.payload.count(1)
+                if self._total_minerals[new_location] <= 0:
+                    self._clear_tile(new_location)
+                    del self._total_minerals[new_location]
 
     def tick(self, drones: Iterable[Drone]) -> None:
         """Do one tick of the map."""
