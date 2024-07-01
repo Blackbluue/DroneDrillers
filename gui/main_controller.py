@@ -6,6 +6,7 @@ import os
 import random
 import sys
 import tkinter as tk
+from time import sleep
 
 from utils import MapData
 from utils.counter import Counter
@@ -17,6 +18,8 @@ from .graphic_tile import GraphicTile
 DEFAULT_TICKS = 100
 DEFAULT_REFINED = 100
 
+NO_DELAY = 0
+
 
 class MainController(tk.Tk):
     """Main game controller."""
@@ -27,9 +30,31 @@ class MainController(tk.Tk):
         self.title("Atron Mining Expedition")
         self._initialize_values(map_dir)
 
+    @property
+    def delay(self) -> float:
+        """The delay between ticks."""
+        return self._delay
+
+    @delay.setter
+    def delay(self, value: float) -> None:
+        """Set the delay between ticks.
+
+        Setting the delay to non-zero causes the game to run in a loop. Set it
+        back to 0 to return to manual play.
+        """
+        if value < NO_DELAY:
+            raise ValueError("Delay must be non-negative")
+        self._delay = value
+        if self._delay == NO_DELAY:
+            self._game_data.player.set_controls()
+        else:
+            self._game_data.player.unset_controls()
+            self.event_generate("<<PlayerMoved>>")
+
     def _initialize_values(self, map_dir: str | None) -> None:
         """Initialize game values from the GUI."""
         self._ticks = Counter(value=DEFAULT_TICKS, max_value=DEFAULT_TICKS)
+        self._delay = 0
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
@@ -85,6 +110,9 @@ class MainController(tk.Tk):
         self._ticks.count(-1)
         if self._ticks.get() == 0:
             self._game_data.finish_excavation()
+        elif self._delay:
+            sleep(self._delay)
+            self.event_generate("<<PlayerMoved>>")
 
     def _extract_player(self, _) -> None:
         """Extract the player from the map."""

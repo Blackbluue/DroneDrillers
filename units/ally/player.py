@@ -43,34 +43,12 @@ class Player(Atron):
         """
         super().deploy(map_data)
         self._map_data = map_data
-
-        self._l_bind = self._window.bind("<Left>", self.move_player, add=True)
-        self._r_bind = self._window.bind("<Right>", self.move_player, add=True)
-        self._u_bind = self._window.bind("<Up>", self.move_player, add=True)
-        self._d_bind = self._window.bind("<Down>", self.move_player, add=True)
-        self._s_bind = self._window.bind(
-            "<Shift_L>", self.move_player, add=True
-        )
+        self.set_controls()
 
     def undeploy(self) -> int:
         """Retrieve the player from the map."""
         payload = super().undeploy()
-        if self._l_bind is not None:
-            self._window.unbind("<Left>", self._l_bind)
-            self._l_bind = None
-        if self._r_bind is not None:
-            self._window.unbind("<Right>", self._r_bind)
-            self._r_bind = None
-        if self._u_bind is not None:
-            self._window.unbind("<Up>", self._u_bind)
-            self._u_bind = None
-        if self._d_bind is not None:
-            self._window.unbind("<Down>", self._d_bind)
-            self._d_bind = None
-        if self._s_bind is not None:
-            self._window.unbind("<Down>", self._s_bind)
-            self._s_bind = None
-
+        self.unset_controls()
         self._map_data = None
         return payload
 
@@ -111,3 +89,44 @@ class Player(Atron):
             self._window.event_generate("<<PlayerReturned>>")
         else:
             self._window.event_generate("<<PlayerMoved>>")
+
+    def set_controls(self) -> None:
+        """Set the controls for the player."""
+        if self._l_bind is None:
+            self._l_bind = self._window.bind(
+                "<Left>", self.move_player, add=True
+            )
+        if self._r_bind is None:
+            self._r_bind = self._window.bind(
+                "<Right>", self.move_player, add=True
+            )
+        if self._u_bind is None:
+            self._u_bind = self._window.bind(
+                "<Up>", self.move_player, add=True
+            )
+        if self._d_bind is None:
+            self._d_bind = self._window.bind(
+                "<Down>", self.move_player, add=True
+            )
+        if self._s_bind is None:
+            self._s_bind = self._window.bind(
+                "<Shift_L>", self.move_player, add=True
+            )
+
+    def unset_controls(self) -> None:
+        """Unset the controls for the player."""
+        if self._l_bind is not None:
+            self._window.unbind("<Left>", self._l_bind)
+            self._l_bind = None
+        if self._r_bind is not None:
+            self._window.unbind("<Right>", self._r_bind)
+            self._r_bind = None
+        if self._u_bind is not None:
+            self._window.unbind("<Up>", self._u_bind)
+            self._u_bind = None
+        if self._d_bind is not None:
+            self._window.unbind("<Down>", self._d_bind)
+            self._d_bind = None
+        if self._s_bind is not None:
+            self._window.unbind("<Down>", self._s_bind)
+            self._s_bind = None
