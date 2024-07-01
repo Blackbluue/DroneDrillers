@@ -96,7 +96,7 @@ class Player(Atron):
         if health_adjust := curr_spot.health_cost():
             self.health.count(health_adjust)
             if self.health.get() <= 0:
-                self._map_data.remove_atron(self)
+                self._window.event_generate("<<PlayerDied>>")
                 return
         if curr_spot == Icon.DEPLOY_ZONE:
             self._window.event_generate("<<PlayerReturned>>")

@@ -33,7 +33,7 @@ class MainController(tk.Tk):
         self._start_button = tk.Button(
             self, command=self._start_button_handler, text="Start"
         )
-        self._tick_tracer = ""
+        self._ticks.trace_add("write", self._check_ticks)
 
         self._game_data = GameData(self)
         self._map_dir: str | None = map_dir
@@ -50,16 +50,13 @@ class MainController(tk.Tk):
 
         self.bind("<<PlayerMoved>>", self._process_tick, add=True)
         self.bind("<<PlayerReturned>>", self._extract_player, add=True)
+        self.bind("<<PlayerDied>>", self._player_died, add=True)
 
     def _start_button_handler(self) -> None:
         """Start the game."""
-        if self._tick_tracer:
-            self._ticks.trace_remove("write", self._tick_tracer)
-            self._tick_tracer = ""
         self._game_data.player.undeploy()
         self._set_new_map()
         self._ticks.reset()
-        self._tick_tracer = self._ticks.trace_add("write", self._finish_mining)
 
     def _process_tick(self, event: tk.Event) -> None:
         """Process a tick of the game.
@@ -101,7 +98,15 @@ class MainController(tk.Tk):
         self._game_data.collect_minerals(self._game_data._player)
         self.event_generate("<<PlayerMoved>>")
 
-    def _finish_mining(self, *_) -> None:
+    def _player_died(self, event: tk.Event) -> None:
+        """Handle the player's death.
+
+        Args:
+            event (tk.Event): The event that triggered the player's death.
+        """
+        self._game_data.finish_excavation()
+
+    def _check_ticks(self, *_) -> None:
         """Finish the mining expedition.
 
         Args:
@@ -109,14 +114,8 @@ class MainController(tk.Tk):
             index (str): The index of the variable.
             mode (str): The mode of the variable.
         """
-        # TODO: health checked at end of tick. need to check after player moves
-        player = self._game_data.player
-        if self._ticks.get() == 0 or player.health.get() <= 0:
-            self._ticks.trace_remove("write", self._tick_tracer)
-            self._tick_tracer = ""
+        if self._ticks.get() == 0 or self._game_data.player.health.get() <= 0:
             self._game_data.finish_excavation()
-            self._game_data.player.undeploy()
-            self._game_data.current_map = None
 
     def _set_new_map(self) -> None:
         """Set the mining map."""

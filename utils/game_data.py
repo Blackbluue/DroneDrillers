@@ -74,9 +74,13 @@ class GameData:
 
     def finish_excavation(self) -> None:
         """Finish the excavation on the current map."""
+        if self._current_map is None:
+            return
+
         self._total_refined.count(self._total_unrefined.get())
         self._total_unrefined.reset()
-        self._player.undeploy()
+        self._current_map.remove_atron(self._player)
+        self._current_map = None
 
     def collect_minerals(self, atron: Atron) -> None:
         """Extract the minerals from the player."""
